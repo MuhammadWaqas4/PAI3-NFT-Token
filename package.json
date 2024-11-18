@@ -1,0 +1,31 @@
+{
+    "name": "pai3",
+    "version": "0.0.1",
+    "description": "NFT based ecosystem with trading, lending, rewards and vesting subsystems",
+    "scripts": {
+        "compile": "hardhat compile",
+        "compile-force": "hardhat compile --force",
+        "deploy-staging": "hardhat run scripts/deploy.js --network staging",
+        "deploy": "hardhat run scripts/deploy.js",
+        "test": "forge test",
+        "format": "prettier --check --write contracts/**/*.sol {scripts/,}*.js --config .prettierrc"
+    },
+    "repository": {
+        "type": "git",
+        "url": "git+https://github.com/MuhammadWaqas4/pai3"
+    },
+    "author": "Muhammad Waqas",
+    "license": "MIT",
+    "devDependencies": {
+        "@chainlink/contracts": "^1.3.0",
+        "@ianvs/prettier-plugin-sort-imports": "^4.3.1",
+        "@nomicfoundation/hardhat-toolbox": "^5.0.0",
+        "@openzeppelin/contracts": "^5.0.2",
+        "dotenv": "^16.4.5",
+        "erc721a": "^4.3.0",
+        "hardhat": "^2.22.9",
+        "prettier": "^3.3.3",
+        "prettier-package-json": "^2.8.0",
+        "prettier-plugin-solidity": "^1.4.1"
+    }
+}

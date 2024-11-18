@@ -1,0 +1,22 @@
+.vscode
+node_modules
+.env
+
+# Hardhat files
+/cache
+/artifacts
+
+# TypeChain files
+/typechain
+/typechain-types
+
+# solidity-coverage files
+/coverage
+/coverage.json
+
+# Lock files
+package-lock.json
+yarn.lock
+
+# Documentation files
+docs
