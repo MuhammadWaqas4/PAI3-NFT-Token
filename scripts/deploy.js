@@ -10,34 +10,53 @@ async function main() {
     console.log("Chain:", networkName);
 
     // Deployment variables.
-    let ownerAddress, fundsWalletAddress, usdtAddress, ethPriceFeedAddress, baseURI;
-
-    // Setting deployment variables.
-    if (networkName == "staging") {
-        ownerAddress = "";
-        fundsWalletAddress = "";
-        usdtAddress = "";
-        ethPriceFeedAddress = "";
-        baseURI = "";
-    } else if (networkName == "mainnet") {
-        ownerAddress = "";
-        fundsWalletAddress = "";
-        usdtAddress = "";
-        ethPriceFeedAddress = "";
-        baseURI = "";
-    }
+    const ownerAddress = "0x45faf7923BAb5A5380515E055CA700519B3e4705";
+    const baseURI = "ipfs://QmaTgKeRjRfk9yAjshdLoYShYyJDsRwABy8f6pDj32jkEo/";
+    const feeWalletAddress = "0x45faf7923BAb5A5380515E055CA700519B3e4705";
+    ("");
+    const tokenAddresses = ["0xEeeeeEeeeEeEeeEeEeEeeEEEeeeeEeeeeeeeEEeE"];
+    const priceFeedAddresses = ["0x694AA1769357215DE4FAC081bf1f309aDC325306"];
 
     // Deploying contracts.
-    const paiAddress = await deploy("PAI", [ownerAddress]);
-
-    // Setting up contracts.
-    const paiInstance = await hre.ethers.getContractAt("PAI", paiAddress);
+    const dynamisAddress = await deploy("Dynamis", [
+        ownerAddress,
+        baseURI,
+        feeWalletAddress,
+        tokenAddresses,
+        priceFeedAddresses
+    ]);
+    const ethosAddress = await deploy("Ethos", [
+        ownerAddress,
+        baseURI,
+        feeWalletAddress,
+        tokenAddresses,
+        priceFeedAddresses
+    ]);
+    const mitosAddress = await deploy("Mitos", [
+        ownerAddress,
+        baseURI,
+        feeWalletAddress,
+        tokenAddresses,
+        priceFeedAddresses
+    ]);
+    const osmosAddress = await deploy("Osmos", [
+        ownerAddress,
+        baseURI,
+        feeWalletAddress,
+        tokenAddresses,
+        priceFeedAddresses
+    ]);
+    const seismosAddress = await deploy("Seismos", [ownerAddress, baseURI]);
 
     // Waiting for block explorer.
     await new Promise((resolve) => setTimeout(resolve, 60000));
 
     // Verifying contracts.
-    await verify(paiAddress, [ownerAddress]);
+    await verify(dynamisAddress, [ownerAddress, baseURI, feeWalletAddress, tokenAddresses, priceFeedAddresses]);
+    await verify(ethosAddress, [ownerAddress, baseURI, feeWalletAddress, tokenAddresses, priceFeedAddresses]);
+    await verify(mitosAddress, [ownerAddress, baseURI, feeWalletAddress, tokenAddresses, priceFeedAddresses]);
+    await verify(osmosAddress, [ownerAddress, baseURI, feeWalletAddress, tokenAddresses, priceFeedAddresses]);
+    await verify(seismosAddress, [ownerAddress, baseURI]);
 
     // Exiting.
     process.exit();

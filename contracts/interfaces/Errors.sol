@@ -3,9 +3,35 @@
 pragma solidity 0.8.28;
 
 /**
- * @dev Errors for the {Base} contract.
+ * @dev Generic Errors.
  */
-interface Errors {
+interface GenericErrors {
+    /**
+     * @dev Indicates that a given string is not valid. For example, `""`.
+     */
+    error InvalidString();
+
+    /**
+     * @dev Indicates an error during state variable assignment if the
+     * replacement string is the same as the stored string.
+     */
+    error IdenticalStringAssignment();
+}
+
+/**
+ * @dev Errors for the {Seismos} contract.
+ */
+interface SeismosErrors is GenericErrors {
+    /**
+     * @dev Indicates an error if a purchaser has already performed a purchase.
+     */
+    error AlreadyPurchased();
+}
+
+/**
+ * @dev Errors for the {BaseV1} contract.
+ */
+interface ErrorsV1 is GenericErrors {
     /**
      * @dev Indicates that a given address is not valid. For example,
      * `address(0)`.
@@ -16,11 +42,6 @@ interface Errors {
      * @dev Indicates that a given integer value is not valid. For example, `0`.
      */
     error InvalidValue();
-
-    /**
-     * @dev Indicates that a given string is not valid. For example, `""`.
-     */
-    error InvalidString();
 
     /**
      * @dev Indicates an error if the number of arguments do not match.
@@ -64,10 +85,14 @@ interface Errors {
      * vesting deadline.
      */
     error VestingDeadlineNotReached();
+}
 
+/**
+ * @dev Errors for the {BaseV2} contract.
+ */
+interface ErrorsV2 is ErrorsV1 {
     /**
-     * @dev Indicates an error during state variable assignment if the
-     * replacement string is the same as the stored string.
+     * @dev Indicates an error if the phase has already been bumped.
      */
-    error IdenticalStringAssignment();
+    error PhaseAlreadyBumped();
 }

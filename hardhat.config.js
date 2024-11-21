@@ -5,7 +5,7 @@ module.exports = {
     solidity: {
         compilers: [
             {
-                version: "0.8.26",
+                version: "0.8.28",
                 settings: {
                     optimizer: {
                         enabled: true,
@@ -36,8 +36,8 @@ module.exports = {
     },
     etherscan: {
         apiKey: {
-            staging: process.env.BLOCK_EXPLORER_API_KEY_STAGING,
-            mainnet: process.env.BLOCK_EXPLORER_API_KEY_MAINNET
+            sepolia: process.env.BLOCK_EXPLORER_API_KEY_ETHEREUM,
+            mainnet: process.env.BLOCK_EXPLORER_API_KEY_ETHEREUM
         }
     }
 };

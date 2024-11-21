@@ -11,20 +11,40 @@ import { IERC721A } from "erc721a/contracts/IERC721A.sol";
 import { IPAI3 } from "./IPAI3.sol";
 
 /**
- * @title IBase.
- * @author Muhammad Waqas.
- * @notice Base NFT collection interface.
+ * @title IBaseV1.
+ * @author PAI3 Team.
+ * @notice BaseV1 NFT collection interface.
  */
-interface IBase is IERC721A {
-    enum Phase {
-        FIRST,
-        SECOND
-    }
+interface IBaseV1 is IERC721A {
+    /* ========== EVENTS ========== */
 
     /**
-     * @dev Emitted when {baseURI} is changed from `oldBaseURI` to `newBaseURI`.
+     * @dev Emitted when `quantity` tokens are purchased by `purchaser`.
+     */
+    event Purchased(
+        address indexed purchaser,
+        IERC20 token,
+        uint256 fromTokenId,
+        uint256 quantity,
+        uint256 cost
+    );
+
+    /**
+     * @dev Emitted when {baseURI} is changed to `newBaseURI` from `oldBaseURI`.
      */
     event SetBaseURI(string newBaseURI, string oldBaseURI);
+
+    /**
+     * @dev Emitted when {priceFeed} of the `token` is changed to `newPriceFeed`
+     * from `oldPriceFeed`.
+     */
+    event PriceFeedUpdated(
+        IERC20 token,
+        AggregatorV3Interface newPriceFeed,
+        AggregatorV3Interface oldPriceFeed
+    );
+
+    /* ========== FUNCTIONS ========== */
 
     /**
      * @notice Mints `quantity` tokens and transfers them to the caller.
@@ -51,12 +71,16 @@ interface IBase is IERC721A {
     function setBaseURI(string memory newBaseURI) external returns (bool);
 
     /**
-     * @notice Changes the state of the contract from `paused` to `unpaused`
-     * after the first phase has ended and bumps the phase.
-     * NOTE: Only `owner` can call this function. Can only be called when
-     * `paused`.
+     * @notice Adds, removes or updates the price feed oracle of a given token.
+     * NOTE: Only `owner` can call this function.
+     * @param token Address of the token.
+     * @param newPriceFeed Price feed oracle to add, remove or update for the
+     * given token.
      */
-    function bumpPhase() external;
+    function updatePriceFeed(
+        IERC20 token,
+        AggregatorV3Interface newPriceFeed
+    ) external;
 
     /**
      * @notice Arbitrary checksummed address to signify ETH.
@@ -77,11 +101,6 @@ interface IBase is IERC721A {
      * @notice Base cost for a single NFT.
      */
     function BASE_COST_SINGLE() external view returns (uint256);
-
-    /**
-     * @notice Current phase.
-     */
-    function phase() external view returns (Phase);
 
     /**
      * @notice Base URI for computing {tokenURI}. If set, the resulting URI for

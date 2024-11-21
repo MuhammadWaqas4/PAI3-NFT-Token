@@ -6,7 +6,7 @@ import { IERC20 } from "@openzeppelin/contracts/token/ERC20/IERC20.sol";
 
 /**
  * @title IPAI3.
- * @author Muhammad Waqas.
+ * @author PAI3 Team.
  * @notice PAI3 token interface.
  */
 interface IPAI3 is IERC20 {

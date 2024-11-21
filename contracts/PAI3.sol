@@ -9,7 +9,7 @@ import { IPAI3 } from "./interfaces/IPAI3.sol";
 
 /**
  * @title PAI3.
- * @author Muhammad Waqas.
+ * @author PAI3 Team.
  * @notice PAI3 token.
  */
 contract PAI3 is Ownable, ERC20, IPAI3 {
