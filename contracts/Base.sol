@@ -60,13 +60,12 @@ contract Base is Ownable2Step, Pausable, ERC721A, Errors, IBase {
 
     /* ========== EVENTS ========== */
 
-    event Sale(
-        address indexed buyer,
+    event Purchased(
+        address indexed purchaser,
         IERC20 token,
-        uint256 baseCost,
-        uint256 cost,
         uint256 fromTokenId,
-        uint256 quantity
+        uint256 quantity,
+        uint256 cost
     );
 
     /* ========== CONSTRUCTOR ========== */
@@ -82,8 +81,10 @@ contract Base is Ownable2Step, Pausable, ERC721A, Errors, IBase {
      * @param initialCap_ Cap on the number of initially minted tokens.
      * @param cap_ Cap on the number of minted tokens.
      * @param feeWallet_ Address of the fee wallet.
-     * @param tokens_ Addresses of the tokens to be used as payment methods.
-     * @param priceFeeds_ Addresses of the price feed oracles.
+     * @param tokens_ Addresses of the tokens to be registered as payment
+     * tokens.
+     * @param priceFeeds_ Addresses of the price feed oracles relevant to a
+     * registered payment token.
      */
     constructor(
         address owner_,
@@ -98,17 +99,17 @@ contract Base is Ownable2Step, Pausable, ERC721A, Errors, IBase {
         AggregatorV3Interface[] memory priceFeeds_
     ) Ownable(owner_) ERC721A(name_, symbol_) {
         if (feeWallet_ == address(0)) {
-            revert InvalidAddress();
+            _revert(InvalidAddress.selector);
         }
 
         if (baseCostSingle_ == 0 || cap_ == 0) {
-            revert InvalidValue();
+            _revert(InvalidValue.selector);
         }
 
         uint256 length = tokens_.length;
 
         if (length != priceFeeds_.length) {
-            revert ArgumentArityMismatch();
+            _revert(ArgumentArityMismatch.selector);
         }
 
         _setBaseURI(baseURI_);
@@ -135,7 +136,7 @@ contract Base is Ownable2Step, Pausable, ERC721A, Errors, IBase {
      */
     function purchaseETH(uint256 quantity) external payable whenNotPaused {
         if (msg.value == 0) {
-            revert InvalidPayableValue();
+            _revert(InvalidPayableValue.selector);
         }
 
         IERC20 token = ETH;
@@ -156,7 +157,7 @@ contract Base is Ownable2Step, Pausable, ERC721A, Errors, IBase {
      */
     function purchase(IERC20 token, uint256 quantity) external whenNotPaused {
         if (address(token) == address(0)) {
-            revert InvalidToken();
+            _revert(InvalidPaymentToken.selector);
         }
 
         uint8 tokenDecimals = IERC20Metadata(address(token)).decimals();
@@ -204,7 +205,7 @@ contract Base is Ownable2Step, Pausable, ERC721A, Errors, IBase {
             }
 
             if (size > 0) {
-                revert VestingDeadlineNotReached();
+                _revert(VestingDeadlineNotReached.selector);
             }
         }
 
@@ -240,7 +241,7 @@ contract Base is Ownable2Step, Pausable, ERC721A, Errors, IBase {
         uint256 quantity
     ) internal returns (uint256) {
         if (quantity == 0) {
-            revert InvalidQuantity();
+            _revert(InvalidQuantity.selector);
         }
 
         uint256 baseCost = quantity * BASE_COST_SINGLE;
@@ -248,7 +249,7 @@ contract Base is Ownable2Step, Pausable, ERC721A, Errors, IBase {
         AggregatorV3Interface priceFeed = priceFeeds[token];
 
         if (address(priceFeed) == address(0)) {
-            revert InvalidPriceFeed();
+            _revert(PaymentTokenNotRegistered.selector);
         }
 
         (, int256 price, , , ) = priceFeed.latestRoundData();
@@ -256,16 +257,15 @@ contract Base is Ownable2Step, Pausable, ERC721A, Errors, IBase {
         uint256 cost = (baseCost * 10 ** normalization) / uint256(price);
 
         if (cost == 0) {
-            revert InvalidCost();
+            _revert(InvalidCost.selector);
         }
 
-        emit Sale({
-            buyer: msg.sender,
+        emit Purchased({
+            purchaser: msg.sender,
             token: token,
-            baseCost: baseCost,
-            cost: cost,
             fromTokenId: _nextTokenId(),
-            quantity: quantity
+            quantity: quantity,
+            cost: cost
         });
 
         return cost;
@@ -276,11 +276,11 @@ contract Base is Ownable2Step, Pausable, ERC721A, Errors, IBase {
      */
     function _setBaseURI(string memory newBaseURI) internal {
         if (bytes(newBaseURI).length == 0) {
-            revert InvalidString();
+            _revert(InvalidString.selector);
         }
 
         if (newBaseURI.equal(baseURI)) {
-            revert IdenticalStringAssignment(newBaseURI, baseURI);
+            _revert(IdenticalStringAssignment.selector);
         }
 
         emit SetBaseURI(newBaseURI, baseURI);
@@ -299,7 +299,7 @@ contract Base is Ownable2Step, Pausable, ERC721A, Errors, IBase {
         uint256 supply = totalSupply();
 
         if (supply > maxSupply) {
-            revert ExceededCap(supply, maxSupply);
+            _revert(ExceededCap.selector);
         }
 
         if (supply == maxSupply && phase == Phase.FIRST) {

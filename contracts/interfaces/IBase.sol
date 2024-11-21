@@ -90,9 +90,9 @@ interface IBase is IERC721A {
     function baseURI() external view returns (string memory);
 
     /**
-     * @notice Address of the price feed oracle relevant to a given payment
-     * method token.
-     * @param token Address of the token to be used as a payment method.
+     * @notice Address of the price feed oracle relevant to a registered payment
+     * token.
+     * @param token Address of the registered payment token.
      */
     function priceFeeds(
         IERC20 token

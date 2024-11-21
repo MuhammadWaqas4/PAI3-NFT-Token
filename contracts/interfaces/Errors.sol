@@ -33,10 +33,10 @@ interface Errors {
     error InvalidPayableValue();
 
     /**
-     * @dev Indicates that a given token is not valid. For example,
+     * @dev Indicates that a given payment token is not valid. For example,
      * `address(0)`.
      */
-    error InvalidToken();
+    error InvalidPaymentToken();
 
     /**
      * @dev Indicates that a given quantity is not valid. For example, `0`.
@@ -44,20 +44,20 @@ interface Errors {
     error InvalidQuantity();
 
     /**
-     * @dev Indicates that a price feed for a given token is not valid. For
-     * example, `address(0)`.
-     */
-    error InvalidPriceFeed();
-
-    /**
      * @dev Indicates that a calculated cost is not valid. For example, `0`.
      */
     error InvalidCost();
 
     /**
-     * @dev Total supply cap has been exceeded.
+     * @dev Indicates an error if a given token is not a registered payment
+     * token.
      */
-    error ExceededCap(uint256 increasedSupply, uint256 cap);
+    error PaymentTokenNotRegistered();
+
+    /**
+     * @dev Indicates an error if the total supply cap has been exceeded.
+     */
+    error ExceededCap();
 
     /**
      * @dev Indicates an error if a transfer or approval is performed before the
@@ -66,10 +66,8 @@ interface Errors {
     error VestingDeadlineNotReached();
 
     /**
-     * @dev Indicates an error during state variable assignment if the argument
-     * string is the same as the stored string.
-     * @param newString New value of the string.
-     * @param oldString Old value of the string.
+     * @dev Indicates an error during state variable assignment if the
+     * replacement string is the same as the stored string.
      */
-    error IdenticalStringAssignment(string newString, string oldString);
+    error IdenticalStringAssignment();
 }
