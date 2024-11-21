@@ -16,30 +16,72 @@ import { IPAI3 } from "./IPAI3.sol";
  * @notice Base NFT collection interface.
  */
 interface IBase is IERC721A {
+    enum Phase {
+        FIRST,
+        SECOND
+    }
+
     /**
      * @dev Emitted when {baseURI} is changed from `oldBaseURI` to `newBaseURI`.
      */
     event SetBaseURI(string newBaseURI, string oldBaseURI);
 
     /**
-     * @notice Base fee in USD to be collected per token being minted.
+     * @notice Mints `quantity` tokens and transfers them to the caller.
+     * NOTE: Only accepts ETH as a payment method. Can only be called when
+     * `unpaused`.
+     * @param quantity Amount of tokens to purchase.
      */
-    function BASE_MINT_FEE() external view returns (uint256);
+    function purchaseETH(uint256 quantity) external payable;
 
     /**
-     * @notice Cap on the token's total supply.
+     * @notice Mints `quantity` tokens and transfers them to the caller.
+     * NOTE: Only accepts registered ERC20 tokens as a payment method. Can only
+     * be called when `unpaused`.
+     * @param token Token to use as a payment method.
+     * @param quantity Amount of tokens to purchase.
      */
-    function CAP() external view returns (uint256);
+    function purchase(IERC20 token, uint256 quantity) external;
 
     /**
-     * @notice Address of the funds collection wallet.
+     * @notice Sets the value for {baseURI}.
+     * NOTE: Only `owner` can call this function.
+     * @param newBaseURI Value to set the {baseURI} to.
      */
-    function FUNDS_WALLET() external view returns (address);
+    function setBaseURI(string memory newBaseURI) external returns (bool);
 
     /**
-     * @notice Address of the Tether USD token.
+     * @notice Changes the state of the contract from `paused` to `unpaused`
+     * after the first phase has ended and bumps the phase.
+     * NOTE: Only `owner` can call this function. Can only be called when
+     * `paused`.
      */
-    function USDT() external view returns (IERC20);
+    function bumpPhase() external;
+
+    /**
+     * @notice Arbitrary checksummed address to signify ETH.
+     */
+    function ETH() external view returns (IERC20);
+
+    /**
+     * @notice Address of the fee wallet.
+     */
+    function FEE_WALLET() external view returns (address);
+
+    /**
+     * @notice Time period until NFTs are vested.
+     */
+    function VESTING_DEADLINE() external view returns (uint256);
+
+    /**
+     * @notice Base cost for a single NFT.
+     */
+    function BASE_COST_SINGLE() external view returns (uint256);
+
+    /**
+     * @notice Current phase.
+     */
+    function phase() external view returns (Phase);
 
     /**
      * @notice Base URI for computing {tokenURI}. If set, the resulting URI for
@@ -48,30 +90,16 @@ interface IBase is IERC721A {
     function baseURI() external view returns (string memory);
 
     /**
-     * @notice Addresses of the price feed oracles.
+     * @notice Address of the price feed oracle relevant to a given payment
+     * method token.
+     * @param token Address of the token to be used as a payment method.
      */
     function priceFeeds(
         IERC20 token
     ) external view returns (AggregatorV3Interface);
 
     /**
-     * @notice Sets the value for {baseURI}.
-     * NOTE: Only `Owner` can call this function.
-     * @param newBaseURI Value to set the {baseURI} to.
+     * @notice Cap on the token's total supply.
      */
-    function setBaseURI(string memory newBaseURI) external returns (bool);
-
-    /**
-     * @notice Safely mints `quantity` tokens and transfers them to `to`.
-     * NOTE: Requires funds at the time of calling. Accepts ETH if given
-     * otherwise uses a dedicated token.
-     * @param token Token to use for minting fees.
-     * @param to Recipient address of minted tokens.
-     * @param quantity Amount of tokens to mint.
-     */
-    function safeMint(
-        IERC20 token,
-        address to,
-        uint256 quantity
-    ) external payable returns (bool);
+    function cap() external view returns (uint256);
 }
