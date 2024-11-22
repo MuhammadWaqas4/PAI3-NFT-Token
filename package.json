@@ -1,6 +1,6 @@
 {
     "name": "pai3",
-    "version": "0.0.1",
+    "version": "1.0.0",
     "description": "NFT based ecosystem with trading, lending, rewards and vesting subsystems",
     "scripts": {
         "compile": "hardhat compile",

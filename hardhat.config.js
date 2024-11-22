@@ -37,6 +37,7 @@ module.exports = {
     etherscan: {
         apiKey: {
             sepolia: process.env.BLOCK_EXPLORER_API_KEY_ETHEREUM,
+            holesky: process.env.BLOCK_EXPLORER_API_KEY_ETHEREUM,
             mainnet: process.env.BLOCK_EXPLORER_API_KEY_ETHEREUM
         }
     }
