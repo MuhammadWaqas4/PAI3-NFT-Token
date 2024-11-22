@@ -10,23 +10,26 @@ async function main() {
     console.log("Chain:", networkName);
 
     // Deployment variables.
-    const ownerAddress = "0x45faf7923BAb5A5380515E055CA700519B3e4705";
+    const ownerAddress = process.env.OWNER_ADDRESS;
     const baseURIs = process.env.BASE_URIS.split(" ");
-    const feeWalletAddress = "0x45faf7923BAb5A5380515E055CA700519B3e4705";
+    const feeWalletAddress = process.env.FEE_WALLET_ADDRESS;
     const tokenAddresses = process.env.TOKEN_ADDRESSES.split(" ");
     const priceFeedAddresses = process.env.PRICE_FEED_ADDRESSES.split(" ");
+    const genericonstructorArguments = [ownerAddress, ""];
+    const constructorArguments = structuredClone(genericonstructorArguments);
+    constructorArguments.push(feeWalletAddress, tokenAddresses, priceFeedAddresses);
 
-    const constructorArguments = [ownerAddress, "", feeWalletAddress, tokenAddresses, priceFeedAddresses];
-
-    const dynamisConstructorArguments = constructorArguments;
+    // Structuring deployment variables.
+    const dynamisConstructorArguments = structuredClone(constructorArguments);
     dynamisConstructorArguments[1] = baseURIs[0];
-    const ethosConstructorArguments = constructorArguments;
+    const ethosConstructorArguments = structuredClone(constructorArguments);
     ethosConstructorArguments[1] = baseURIs[1];
-    const mitosConstructorArguments = constructorArguments;
+    const mitosConstructorArguments = structuredClone(constructorArguments);
     mitosConstructorArguments[1] = baseURIs[2];
-    const osmosConstructorArguments = constructorArguments;
+    const osmosConstructorArguments = structuredClone(constructorArguments);
     osmosConstructorArguments[1] = baseURIs[3];
-    const seismosConstructorArguments = [ownerAddress, baseURIs[4]];
+    const seismosConstructorArguments = structuredClone(genericonstructorArguments);
+    seismosConstructorArguments[1] = baseURIs[4];
 
     // Deploying contracts.
     const dynamisAddress = await deploy("Dynamis", dynamisConstructorArguments);
@@ -39,11 +42,11 @@ async function main() {
     await new Promise((resolve) => setTimeout(resolve, 60000));
 
     // Verifying contracts.
-    await verify(dynamisAddress, "contracts/extensions/Dynamis.sol:Dynamis", dynamisConstructorArguments);
-    await verify(ethosAddress, "contracts/extensions/Ethos.sol:Ethos", ethosConstructorArguments);
-    await verify(mitosAddress, "contracts/extensions/Mitos.sol:Mitos", mitosConstructorArguments);
-    await verify(osmosAddress, "contracts/extensions/Osmos.sol:Osmos", osmosConstructorArguments);
-    await verify(seismosAddress, "contracts/extensions/Seismos.sol:Seismos", seismosConstructorArguments);
+    await verify(dynamisAddress, dynamisConstructorArguments);
+    await verifyWithPath(ethosAddress, "contracts/extensions/Ethos.sol:Ethos", ethosConstructorArguments);
+    await verifyWithPath(mitosAddress, "contracts/extensions/Mitos.sol:Mitos", mitosConstructorArguments);
+    await verifyWithPath(osmosAddress, "contracts/extensions/Osmos.sol:Osmos", osmosConstructorArguments);
+    await verify(seismosAddress, seismosConstructorArguments);
 
     // Exiting.
     process.exit();
@@ -81,7 +84,17 @@ async function deploy(contractName, constructorArguments) {
     return contractAddress;
 }
 
-async function verify(contractAddress, contractPath, constructorArguments) {
+async function verify(contractAddress, constructorArguments) {
+    console.log(`verify ${contractAddress} with arguments ${constructorArguments.join(",")}`);
+
+    try {
+        await hre.run("verify:verify", { address: contractAddress, constructorArguments: constructorArguments });
+    } catch (error) {
+        console.log(error);
+    }
+}
+
+async function verifyWithPath(contractAddress, contractPath, constructorArguments) {
     console.log(`verify ${contractAddress} with arguments ${constructorArguments.join(",")}`);
 
     try {
