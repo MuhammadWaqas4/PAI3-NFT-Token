@@ -98,6 +98,18 @@ interface IBaseV2 is IERC721A {
     function bumpPhase() external;
 
     /**
+     * @notice Change the state of the contract from unpaused to paused.
+     * NOTE: Only `owner` can call this function.
+     */
+    function pause() external;
+
+    /**
+     * @notice Change the state of the contract from paused to unpaused.
+     * NOTE: Only `owner` can call this function.
+     */
+    function unpause() external;
+
+    /**
      * @notice Arbitrary checksummed address to signify ETH.
      */
     function ETH() external view returns (IERC20);

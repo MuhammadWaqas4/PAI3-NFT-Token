@@ -187,6 +187,20 @@ abstract contract BaseV2 is Ownable2Step, Pausable, ERC721A, ErrorsV2, IBaseV2 {
     }
 
     /**
+     * @inheritdoc IBaseV2
+     */
+    function pause() external onlyOwner {
+        _pause();
+    }
+
+    /**
+     * @inheritdoc IBaseV2
+     */
+    function unpause() external onlyOwner {
+        _unpause();
+    }
+
+    /**
      * @inheritdoc ERC721A
      * @dev Overridden to add vesting check.
      */
