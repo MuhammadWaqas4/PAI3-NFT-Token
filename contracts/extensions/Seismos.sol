@@ -68,24 +68,8 @@ contract Seismos is Ownable2Step, ERC721, SeismosErrors, ISeismos {
     }
 
     /**
-     * @dev Internal set base uri logic.
-     */
-    function _setBaseURI(string memory newBaseURI) internal {
-        if (bytes(newBaseURI).length == 0) {
-            _revert(InvalidString.selector);
-        }
-
-        if (newBaseURI.equal(baseURI)) {
-            _revert(IdenticalStringAssignment.selector);
-        }
-
-        emit SetBaseURI(newBaseURI, baseURI);
-
-        baseURI = newBaseURI;
-    }
-
-    /**
      * @inheritdoc ERC721
+     * @dev Overridden to return a state variable.
      */
     function _baseURI() internal view override returns (string memory) {
         return baseURI;
@@ -99,5 +83,22 @@ contract Seismos is Ownable2Step, ERC721, SeismosErrors, ISeismos {
             mstore(0x00, errorSelector)
             revert(0x00, 0x04)
         }
+    }
+
+    /**
+     * @dev Implements set base uri logic.
+     */
+    function _setBaseURI(string memory newBaseURI) private {
+        if (bytes(newBaseURI).length == 0) {
+            _revert(InvalidString.selector);
+        }
+
+        if (newBaseURI.equal(baseURI)) {
+            _revert(IdenticalStringAssignment.selector);
+        }
+
+        emit SetBaseURI(newBaseURI, baseURI);
+
+        baseURI = newBaseURI;
     }
 }

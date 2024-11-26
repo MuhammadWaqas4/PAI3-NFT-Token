@@ -207,13 +207,44 @@ abstract contract BaseV1 is Ownable2Step, ERC721A, ErrorsV2, IBaseV1 {
     }
 
     /**
-     * @dev Internal purchase logic.
+     * @inheritdoc ERC721A
+     * @dev Overridden to include cap on token's total supply.
+     */
+    function _mint(address to, uint256 quantity) internal override {
+        super._mint(to, quantity);
+
+        uint256 maxSupply = cap();
+        uint256 supply = totalSupply();
+
+        if (supply > maxSupply) {
+            _revert(ExceededCap.selector);
+        }
+    }
+
+    /**
+     * @inheritdoc ERC721A
+     * @dev Overridden to return a state variable.
+     */
+    function _baseURI() internal view override returns (string memory) {
+        return baseURI;
+    }
+
+    /**
+     * @inheritdoc ERC721A
+     * @dev Overridden to change {_startTokenId} to `1`.
+     */
+    function _startTokenId() internal pure override returns (uint256) {
+        return 1;
+    }
+
+    /**
+     * @dev Implements purchase logic.
      */
     function _purchase(
         IERC20 token,
         uint8 tokenDecimals,
         uint256 quantity
-    ) internal returns (uint256) {
+    ) private returns (uint256) {
         if (quantity == 0) {
             _revert(InvalidQuantity.selector);
         }
@@ -246,9 +277,9 @@ abstract contract BaseV1 is Ownable2Step, ERC721A, ErrorsV2, IBaseV1 {
     }
 
     /**
-     * @dev Internal set base uri logic.
+     * @dev Implements set base uri logic.
      */
-    function _setBaseURI(string memory newBaseURI) internal {
+    function _setBaseURI(string memory newBaseURI) private {
         if (bytes(newBaseURI).length == 0) {
             _revert(InvalidString.selector);
         }
@@ -263,12 +294,12 @@ abstract contract BaseV1 is Ownable2Step, ERC721A, ErrorsV2, IBaseV1 {
     }
 
     /**
-     * @dev Internal update price feed logic.
+     * @dev Implements update price feed logic.
      */
     function _updatePriceFeed(
         IERC20 token,
         AggregatorV3Interface newPriceFeed
-    ) internal {
+    ) private {
         AggregatorV3Interface priceFeed = priceFeeds[token];
 
         if (
@@ -282,35 +313,5 @@ abstract contract BaseV1 is Ownable2Step, ERC721A, ErrorsV2, IBaseV1 {
         priceFeeds[token] = newPriceFeed;
 
         emit PriceFeedUpdated(token, newPriceFeed, priceFeed);
-    }
-
-    /**
-     * @inheritdoc ERC721A
-     * @dev Overridden to include cap on token's total supply.
-     */
-    function _mint(address to, uint256 quantity) internal override {
-        super._mint(to, quantity);
-
-        uint256 maxSupply = cap();
-        uint256 supply = totalSupply();
-
-        if (supply > maxSupply) {
-            _revert(ExceededCap.selector);
-        }
-    }
-
-    /**
-     * @inheritdoc ERC721A
-     */
-    function _baseURI() internal view override returns (string memory) {
-        return baseURI;
-    }
-
-    /**
-     * @inheritdoc ERC721A
-     * @dev Overridden to change {_startTokenId} to `1`.
-     */
-    function _startTokenId() internal pure override returns (uint256) {
-        return 1;
     }
 }
