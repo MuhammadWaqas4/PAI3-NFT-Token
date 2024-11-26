@@ -76,16 +76,6 @@ contract Seismos is Ownable2Step, ERC721, SeismosErrors, ISeismos {
     }
 
     /**
-     * @dev For more efficient reverts.
-     */
-    function _revert(bytes4 errorSelector) internal pure {
-        assembly {
-            mstore(0x00, errorSelector)
-            revert(0x00, 0x04)
-        }
-    }
-
-    /**
      * @dev Implements set base uri logic.
      */
     function _setBaseURI(string memory newBaseURI) private {
@@ -100,5 +90,15 @@ contract Seismos is Ownable2Step, ERC721, SeismosErrors, ISeismos {
         emit SetBaseURI(newBaseURI, baseURI);
 
         baseURI = newBaseURI;
+    }
+
+    /**
+     * @dev For more efficient reverts.
+     */
+    function _revert(bytes4 errorSelector) private pure {
+        assembly {
+            mstore(0x00, errorSelector)
+            revert(0x00, 0x04)
+        }
     }
 }
