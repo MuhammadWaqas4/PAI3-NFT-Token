@@ -7,55 +7,45 @@ import { AggregatorV3Interface } from "@chainlink/contracts/src/v0.8/shared/inte
 import { Ownable2Step, Ownable } from "@openzeppelin/contracts/access/Ownable2Step.sol";
 import { IERC20Metadata } from "@openzeppelin/contracts/token/ERC20/extensions/IERC20Metadata.sol";
 import { SafeERC20, IERC20, Address } from "@openzeppelin/contracts/token/ERC20/utils/SafeERC20.sol";
-import { Pausable } from "@openzeppelin/contracts/utils/Pausable.sol";
 import { Strings } from "@openzeppelin/contracts/utils/Strings.sol";
 
 import { ERC721A, IERC721A } from "erc721a/contracts/ERC721A.sol";
 
-import { ErrorsV2 } from "./interfaces/Errors.sol";
-import { IBaseV2 } from "./interfaces/IBaseV2.sol";
+import { ErrorsV2 } from "../interfaces/Errors.sol";
+import { IBaseV1 } from "../interfaces/IBaseV1.sol";
 
 /**
- * @title BaseV2.
+ * @title BaseV1.
  * @author PAI3 Team.
- * @notice BaseV2 NFT collection.
+ * @notice BaseV1 NFT collection.
  */
-abstract contract BaseV2 is Ownable2Step, Pausable, ERC721A, ErrorsV2, IBaseV2 {
+abstract contract BaseV1 is Ownable2Step, ERC721A, ErrorsV2, IBaseV1 {
     using SafeERC20 for IERC20;
     using Address for address payable;
     using Strings for string;
 
     /* ========== STATE VARIABLES ========== */
 
-    /// @inheritdoc IBaseV2
+    /// @inheritdoc IBaseV1
     IERC20 public constant ETH =
         IERC20(0xEeeeeEeeeEeEeeEeEeEeeEEEeeeeEeeeeeeeEEeE);
 
-    /// @inheritdoc IBaseV2
+    /// @inheritdoc IBaseV1
     address public immutable FEE_WALLET;
 
-    /// @inheritdoc IBaseV2
+    /// @inheritdoc IBaseV1
     uint256 public immutable VESTING_DEADLINE;
 
-    /// @inheritdoc IBaseV2
+    /// @inheritdoc IBaseV1
     uint256 public immutable BASE_COST_SINGLE;
 
-    /// @dev Cap on the number of initially minted tokens.
-    /// NOTE: Once this cap is reached further minting will be paused until the
-    /// next phase.
-    uint256 private immutable _INITIAL_CAP;
-
     /// @dev Cap on the number of minted tokens.
-    /// NOTE: This value is inclusive of `_INITIAL_CAP`.
     uint256 private immutable _CAP;
 
-    /// @inheritdoc IBaseV2
-    Phase public phase;
-
-    /// @inheritdoc IBaseV2
+    /// @inheritdoc IBaseV1
     string public baseURI;
 
-    /// @inheritdoc IBaseV2
+    /// @inheritdoc IBaseV1
     mapping(IERC20 token => AggregatorV3Interface priceFeed) public priceFeeds;
 
     /* ========== CONSTRUCTOR ========== */
@@ -68,7 +58,6 @@ abstract contract BaseV2 is Ownable2Step, Pausable, ERC721A, ErrorsV2, IBaseV2 {
      * @param baseURI_ Base URI for computing the {tokenURI}.
      * @param feeWallet_ Address of the fee wallet.
      * @param baseCostSingle_ Base cost for a single NFT.
-     * @param initialCap_ Cap on the number of initially minted tokens.
      * @param cap_ Cap on the number of minted tokens.
      * @param tokens_ Addresses of the tokens to be registered as payment
      * tokens.
@@ -82,7 +71,6 @@ abstract contract BaseV2 is Ownable2Step, Pausable, ERC721A, ErrorsV2, IBaseV2 {
         string memory baseURI_,
         address feeWallet_,
         uint256 baseCostSingle_,
-        uint256 initialCap_,
         uint256 cap_,
         IERC20[] memory tokens_,
         AggregatorV3Interface[] memory priceFeeds_
@@ -106,7 +94,6 @@ abstract contract BaseV2 is Ownable2Step, Pausable, ERC721A, ErrorsV2, IBaseV2 {
         FEE_WALLET = feeWallet_;
         VESTING_DEADLINE = block.timestamp + 25 weeks;
         BASE_COST_SINGLE = baseCostSingle_;
-        _INITIAL_CAP = initialCap_;
         _CAP = cap_;
 
         for (uint256 i = 0; i < length; ++i) {
@@ -117,7 +104,7 @@ abstract contract BaseV2 is Ownable2Step, Pausable, ERC721A, ErrorsV2, IBaseV2 {
     /* ========== FUNCTIONS ========== */
 
     /**
-     * @inheritdoc IBaseV2
+     * @inheritdoc IBaseV1
      */
     function purchaseETH(uint256 quantity) external payable {
         if (msg.value == 0) {
@@ -138,7 +125,7 @@ abstract contract BaseV2 is Ownable2Step, Pausable, ERC721A, ErrorsV2, IBaseV2 {
     }
 
     /**
-     * @inheritdoc IBaseV2
+     * @inheritdoc IBaseV1
      */
     function purchase(IERC20 token, uint256 quantity) external {
         if (address(token) == address(0)) {
@@ -154,7 +141,7 @@ abstract contract BaseV2 is Ownable2Step, Pausable, ERC721A, ErrorsV2, IBaseV2 {
     }
 
     /**
-     * @inheritdoc IBaseV2
+     * @inheritdoc IBaseV1
      */
     function setBaseURI(
         string memory newBaseURI
@@ -165,39 +152,13 @@ abstract contract BaseV2 is Ownable2Step, Pausable, ERC721A, ErrorsV2, IBaseV2 {
     }
 
     /**
-     * @inheritdoc IBaseV2
+     * @inheritdoc IBaseV1
      */
     function updatePriceFeed(
         IERC20 token,
         AggregatorV3Interface newPriceFeed
     ) external onlyOwner {
         _updatePriceFeed(token, newPriceFeed);
-    }
-
-    /**
-     * @inheritdoc IBaseV2
-     */
-    function bumpPhase() external onlyOwner {
-        if (phase != Phase.FIRST) {
-            _revert(PhaseAlreadyBumped.selector);
-        }
-
-        _unpause();
-        phase = Phase.SECOND;
-    }
-
-    /**
-     * @inheritdoc IBaseV2
-     */
-    function pause() external onlyOwner {
-        _pause();
-    }
-
-    /**
-     * @inheritdoc IBaseV2
-     */
-    function unpause() external onlyOwner {
-        _unpause();
     }
 
     /**
@@ -226,10 +187,10 @@ abstract contract BaseV2 is Ownable2Step, Pausable, ERC721A, ErrorsV2, IBaseV2 {
     }
 
     /**
-     * @inheritdoc IBaseV2
+     * @inheritdoc IBaseV1
      */
     function cap() public view returns (uint256) {
-        return phase == Phase.FIRST ? _INITIAL_CAP : _CAP;
+        return _CAP;
     }
 
     /**
@@ -241,7 +202,7 @@ abstract contract BaseV2 is Ownable2Step, Pausable, ERC721A, ErrorsV2, IBaseV2 {
         bytes4 interfaceId
     ) public view override(ERC721A, IERC721A) returns (bool) {
         return
-            interfaceId == type(IBaseV2).interfaceId ||
+            interfaceId == type(IBaseV1).interfaceId ||
             super.supportsInterface(interfaceId);
     }
 
@@ -257,10 +218,6 @@ abstract contract BaseV2 is Ownable2Step, Pausable, ERC721A, ErrorsV2, IBaseV2 {
 
         if (supply > maxSupply) {
             _revert(ExceededCap.selector);
-        }
-
-        if (supply == maxSupply && phase == Phase.FIRST) {
-            _pause();
         }
     }
 
@@ -287,7 +244,7 @@ abstract contract BaseV2 is Ownable2Step, Pausable, ERC721A, ErrorsV2, IBaseV2 {
         IERC20 token,
         uint8 tokenDecimals,
         uint256 quantity
-    ) private whenNotPaused returns (uint256) {
+    ) private returns (uint256) {
         if (quantity == 0) {
             _revert(InvalidQuantity.selector);
         }

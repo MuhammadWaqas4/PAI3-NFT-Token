@@ -6,7 +6,7 @@ import { AggregatorV3Interface } from "@chainlink/contracts/src/v0.8/shared/inte
 
 import { IERC20 } from "@openzeppelin/contracts/token/ERC20/IERC20.sol";
 
-import { BaseV1 } from "../BaseV1.sol";
+import { BaseV1 } from "../bases/BaseV1.sol";
 
 /**
  * @title Mitos.

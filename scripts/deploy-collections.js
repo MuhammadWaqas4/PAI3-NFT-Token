@@ -43,9 +43,9 @@ async function main() {
 
     // Verifying contracts.
     await verify(dynamisAddress, dynamisConstructorArguments);
-    await verifyWithPath(ethosAddress, "contracts/extensions/Ethos.sol:Ethos", ethosConstructorArguments);
-    await verifyWithPath(mitosAddress, "contracts/extensions/Mitos.sol:Mitos", mitosConstructorArguments);
-    await verifyWithPath(osmosAddress, "contracts/extensions/Osmos.sol:Osmos", osmosConstructorArguments);
+    await verifyWithPath(ethosAddress, "contracts/collections/Ethos.sol:Ethos", ethosConstructorArguments);
+    await verifyWithPath(mitosAddress, "contracts/collections/Mitos.sol:Mitos", mitosConstructorArguments);
+    await verifyWithPath(osmosAddress, "contracts/collections/Osmos.sol:Osmos", osmosConstructorArguments);
     await verify(seismosAddress, seismosConstructorArguments);
 
     // Exiting.

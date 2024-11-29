@@ -6,14 +6,14 @@ import { AggregatorV3Interface } from "@chainlink/contracts/src/v0.8/shared/inte
 
 import { IERC20 } from "@openzeppelin/contracts/token/ERC20/IERC20.sol";
 
-import { BaseV1 } from "../BaseV1.sol";
+import { BaseV2 } from "../bases/BaseV2.sol";
 
 /**
- * @title Ethos.
+ * @title Dynamis.
  * @author PAI3 Team.
- * @notice Ethos NFT collection.
+ * @notice Dynamis NFT collection.
  */
-contract Ethos is BaseV1 {
+contract Dynamis is BaseV2 {
     /* ========== CONSTRUCTOR ========== */
 
     /**
@@ -33,14 +33,15 @@ contract Ethos is BaseV1 {
         IERC20[] memory tokens_,
         AggregatorV3Interface[] memory priceFeeds_
     )
-        BaseV1(
+        BaseV2(
             owner_,
-            "Ethos",
-            "ETS",
+            "Dynamis",
+            "DYS",
             baseURI_,
             feeWallet_,
-            250,
-            50_000,
+            1_000,
+            100,
+            10_000,
             tokens_,
             priceFeeds_
         )
