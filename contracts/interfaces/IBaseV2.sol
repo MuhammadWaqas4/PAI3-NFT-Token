@@ -42,6 +42,11 @@ interface IBaseV2 is IERC721A {
     event SetBaseURI(string newBaseURI, string oldBaseURI);
 
     /**
+     * @dev Emitted when {signer} is changed to `newSigner` from `oldSigner`.
+     */
+    event SignerUpdated(address indexed newSigner, address indexed oldSigner);
+
+    /**
      * @dev Emitted when {priceFeed} of the `token` is changed to `newPriceFeed`
      * from `oldPriceFeed`.
      */
@@ -58,8 +63,14 @@ interface IBaseV2 is IERC721A {
      * NOTE: Only accepts ETH as a payment method. Can only be called when
      * `unpaused`.
      * @param quantity Amount of tokens to purchase.
+     * @param deadline Expiration deadline for the signed message.
+     * @param signature Signed message to determine correctness.
      */
-    function purchaseETH(uint256 quantity) external payable;
+    function purchaseETH(
+        uint256 quantity,
+        uint256 deadline,
+        bytes memory signature
+    ) external payable;
 
     /**
      * @notice Mints `quantity` tokens and transfers them to the caller.
@@ -67,18 +78,33 @@ interface IBaseV2 is IERC721A {
      * be called when `unpaused`.
      * @param token Token to use as a payment method.
      * @param quantity Amount of tokens to purchase.
+     * @param deadline Expiration deadline for the signed message.
+     * @param signature Signed message to determine correctness.
      */
-    function purchase(IERC20 token, uint256 quantity) external;
+    function purchase(
+        IERC20 token,
+        uint256 quantity,
+        uint256 deadline,
+        bytes memory signature
+    ) external;
 
     /**
      * @notice Sets the value for {baseURI}.
      * NOTE: Only `owner` can call this function.
      * @param newBaseURI Value to set the {baseURI} to.
      */
-    function setBaseURI(string memory newBaseURI) external returns (bool);
+    function setBaseURI(string memory newBaseURI) external;
 
     /**
-     * @notice Adds, removes or updates the price feed oracle of a given token.
+     * @notice Updates the address of the ECDSA {signer}.
+     * NOTE: Only `owner` can call this function.
+     * @param newSigner Address of the new data signer.
+     */
+    function updateSigner(address newSigner) external;
+
+    /**
+     * @notice Adds, removes or updates the price feed oracle of a given
+     * `token`.
      * NOTE: Only `owner` can call this function.
      * @param token Address of the token.
      * @param newPriceFeed Price feed oracle to add, remove or update for the
@@ -139,6 +165,11 @@ interface IBaseV2 is IERC721A {
      * each token will be the concatenation of the `baseURI` and the `tokenId`.
      */
     function baseURI() external view returns (string memory);
+
+    /**
+     * @notice Address of the ECDSA signer.
+     */
+    function signer() external view returns (address);
 
     /**
      * @notice Address of the price feed oracle relevant to a registered payment

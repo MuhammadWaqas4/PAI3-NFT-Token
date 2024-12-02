@@ -19,8 +19,9 @@ contract Dynamis is BaseV2 {
     /**
      * @dev Constructor. Assigns ownership and initializes variables.
      * @param owner_ Address of the contract owner.
-     * @param baseURI_ Base URI for computing the {tokenURI}.
      * @param feeWallet_ Address of the fee wallet.
+     * @param baseURI_ Base URI for computing the {tokenURI}.
+     * @param signer_ Address of the ECDSA signer.
      * @param tokens_ Addresses of the tokens to be registered as payment
      * tokens.
      * @param priceFeeds_ Addresses of the price feed oracles relevant to a
@@ -28,8 +29,9 @@ contract Dynamis is BaseV2 {
      */
     constructor(
         address owner_,
-        string memory baseURI_,
         address feeWallet_,
+        string memory baseURI_,
+        address signer_,
         IERC20[] memory tokens_,
         AggregatorV3Interface[] memory priceFeeds_
     )
@@ -37,11 +39,12 @@ contract Dynamis is BaseV2 {
             owner_,
             "Dynamis",
             "DYS",
-            baseURI_,
             feeWallet_,
             1_000,
             100,
             10_000,
+            baseURI_,
+            signer_,
             tokens_,
             priceFeeds_
         )

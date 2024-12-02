@@ -19,8 +19,10 @@ contract Seismos is Ownable2Step, ERC721, SeismosErrors, ISeismos {
 
     /* ========== STATE VARIABLES ========== */
 
+    /// @inheritdoc ISeismos
     uint256 public totalSupply;
 
+    /// @inheritdoc ISeismos
     string public baseURI;
 
     /* ========== CONSTRUCTOR ========== */

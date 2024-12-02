@@ -95,4 +95,15 @@ interface ErrorsV2 is ErrorsV1 {
      * @dev Indicates an error if the phase has already been bumped.
      */
     error PhaseAlreadyBumped();
+
+    /**
+     * @dev Indicates an error during state variable assignment if the
+     * replacement address is the same as the stored address.
+     */
+    error IdenticalAddressAssignment();
+
+    /**
+     * @dev Indicates an error if the ECDSA signature is invalid.
+     */
+    error InvalidSignature();
 }

@@ -39,6 +39,11 @@ interface ISeismos is IERC721 {
     function setBaseURI(string memory newBaseURI) external returns (bool);
 
     /**
+     * @dev Total number of tokens in existence.
+     */
+    function totalSupply() external view returns (uint256);
+
+    /**
      * @notice Base URI for computing {tokenURI}. If set, the resulting URI for
      * each token will be the concatenation of the `baseURI` and the `tokenId`.
      */

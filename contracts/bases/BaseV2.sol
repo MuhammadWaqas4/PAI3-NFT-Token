@@ -7,6 +7,8 @@ import { AggregatorV3Interface } from "@chainlink/contracts/src/v0.8/shared/inte
 import { Ownable2Step, Ownable } from "@openzeppelin/contracts/access/Ownable2Step.sol";
 import { IERC20Metadata } from "@openzeppelin/contracts/token/ERC20/extensions/IERC20Metadata.sol";
 import { SafeERC20, IERC20, Address } from "@openzeppelin/contracts/token/ERC20/utils/SafeERC20.sol";
+import { ECDSA } from "@openzeppelin/contracts/utils/cryptography/ECDSA.sol";
+import { MessageHashUtils } from "@openzeppelin/contracts/utils/cryptography/MessageHashUtils.sol";
 import { Pausable } from "@openzeppelin/contracts/utils/Pausable.sol";
 import { Strings } from "@openzeppelin/contracts/utils/Strings.sol";
 
@@ -23,6 +25,8 @@ import { IBaseV2 } from "../interfaces/IBaseV2.sol";
 abstract contract BaseV2 is Ownable2Step, Pausable, ERC721A, ErrorsV2, IBaseV2 {
     using SafeERC20 for IERC20;
     using Address for address payable;
+    using ECDSA for bytes32;
+    using MessageHashUtils for bytes32;
     using Strings for string;
 
     /* ========== STATE VARIABLES ========== */
@@ -30,6 +34,9 @@ abstract contract BaseV2 is Ownable2Step, Pausable, ERC721A, ErrorsV2, IBaseV2 {
     /// @inheritdoc IBaseV2
     IERC20 public constant ETH =
         IERC20(0xEeeeeEeeeEeEeeEeEeEeeEEEeeeeEeeeeeeeEEeE);
+
+    /// @dev One year time in seconds.
+    uint256 private constant _ONE_YEAR_TIME = 31_536_000 seconds;
 
     /// @inheritdoc IBaseV2
     address public immutable FEE_WALLET;
@@ -56,6 +63,9 @@ abstract contract BaseV2 is Ownable2Step, Pausable, ERC721A, ErrorsV2, IBaseV2 {
     string public baseURI;
 
     /// @inheritdoc IBaseV2
+    address public signer;
+
+    /// @inheritdoc IBaseV2
     mapping(IERC20 token => AggregatorV3Interface priceFeed) public priceFeeds;
 
     /* ========== CONSTRUCTOR ========== */
@@ -65,11 +75,12 @@ abstract contract BaseV2 is Ownable2Step, Pausable, ERC721A, ErrorsV2, IBaseV2 {
      * @param owner_ Address of the contract owner.
      * @param name_ Token collection name.
      * @param symbol_ Token collection symbol.
-     * @param baseURI_ Base URI for computing the {tokenURI}.
      * @param feeWallet_ Address of the fee wallet.
      * @param baseCostSingle_ Base cost for a single NFT.
      * @param initialCap_ Cap on the number of initially minted tokens.
      * @param cap_ Cap on the number of minted tokens.
+     * @param baseURI_ Base URI for computing the {tokenURI}.
+     * @param signer_ Address of the ECDSA signer.
      * @param tokens_ Addresses of the tokens to be registered as payment
      * tokens.
      * @param priceFeeds_ Addresses of the price feed oracles relevant to a
@@ -79,11 +90,12 @@ abstract contract BaseV2 is Ownable2Step, Pausable, ERC721A, ErrorsV2, IBaseV2 {
         address owner_,
         string memory name_,
         string memory symbol_,
-        string memory baseURI_,
         address feeWallet_,
         uint256 baseCostSingle_,
         uint256 initialCap_,
         uint256 cap_,
+        string memory baseURI_,
+        address signer_,
         IERC20[] memory tokens_,
         AggregatorV3Interface[] memory priceFeeds_
     ) Ownable(owner_) ERC721A(name_, symbol_) {
@@ -101,13 +113,15 @@ abstract contract BaseV2 is Ownable2Step, Pausable, ERC721A, ErrorsV2, IBaseV2 {
             _revert(ArgumentArityMismatch.selector);
         }
 
-        _setBaseURI(baseURI_);
-
         FEE_WALLET = feeWallet_;
-        VESTING_DEADLINE = block.timestamp + 25 weeks;
+        VESTING_DEADLINE = block.timestamp + _ONE_YEAR_TIME;
         BASE_COST_SINGLE = baseCostSingle_;
+
         _INITIAL_CAP = initialCap_;
         _CAP = cap_;
+
+        _setBaseURI(baseURI_);
+        _updateSigner(signer_);
 
         for (uint256 i = 0; i < length; ++i) {
             _updatePriceFeed(tokens_[i], priceFeeds_[i]);
@@ -119,14 +133,24 @@ abstract contract BaseV2 is Ownable2Step, Pausable, ERC721A, ErrorsV2, IBaseV2 {
     /**
      * @inheritdoc IBaseV2
      */
-    function purchaseETH(uint256 quantity) external payable {
+    function purchaseETH(
+        uint256 quantity,
+        uint256 deadline,
+        bytes memory signature
+    ) external payable {
         if (msg.value == 0) {
             _revert(InvalidPayableValue.selector);
         }
 
         IERC20 token = ETH;
         uint8 tokenDecimals = 18;
-        uint256 cost = _purchase(token, tokenDecimals, quantity);
+        uint256 cost = _purchase(
+            token,
+            tokenDecimals,
+            quantity,
+            deadline,
+            signature
+        );
 
         payable(FEE_WALLET).sendValue(cost);
 
@@ -140,13 +164,24 @@ abstract contract BaseV2 is Ownable2Step, Pausable, ERC721A, ErrorsV2, IBaseV2 {
     /**
      * @inheritdoc IBaseV2
      */
-    function purchase(IERC20 token, uint256 quantity) external {
+    function purchase(
+        IERC20 token,
+        uint256 quantity,
+        uint256 deadline,
+        bytes memory signature
+    ) external {
         if (address(token) == address(0)) {
             _revert(InvalidPaymentToken.selector);
         }
 
         uint8 tokenDecimals = IERC20Metadata(address(token)).decimals();
-        uint256 cost = _purchase(token, tokenDecimals, quantity);
+        uint256 cost = _purchase(
+            token,
+            tokenDecimals,
+            quantity,
+            deadline,
+            signature
+        );
 
         token.safeTransferFrom(msg.sender, FEE_WALLET, cost);
 
@@ -156,12 +191,15 @@ abstract contract BaseV2 is Ownable2Step, Pausable, ERC721A, ErrorsV2, IBaseV2 {
     /**
      * @inheritdoc IBaseV2
      */
-    function setBaseURI(
-        string memory newBaseURI
-    ) external onlyOwner returns (bool) {
+    function setBaseURI(string memory newBaseURI) external onlyOwner {
         _setBaseURI(newBaseURI);
+    }
 
-        return true;
+    /**
+     * @inheritdoc IBaseV2
+     */
+    function updateSigner(address newSigner) external onlyOwner {
+        _updateSigner(newSigner);
     }
 
     /**
@@ -286,7 +324,9 @@ abstract contract BaseV2 is Ownable2Step, Pausable, ERC721A, ErrorsV2, IBaseV2 {
     function _purchase(
         IERC20 token,
         uint8 tokenDecimals,
-        uint256 quantity
+        uint256 quantity,
+        uint256 deadline,
+        bytes memory signature
     ) private whenNotPaused returns (uint256) {
         if (quantity == 0) {
             _revert(InvalidQuantity.selector);
@@ -300,6 +340,16 @@ abstract contract BaseV2 is Ownable2Step, Pausable, ERC721A, ErrorsV2, IBaseV2 {
             _revert(PaymentTokenNotRegistered.selector);
         }
 
+        uint256 fromTokenId = _nextTokenId();
+
+        bytes32 hash = keccak256(
+            abi.encodePacked(msg.sender, fromTokenId, deadline)
+        ).toEthSignedMessageHash();
+
+        if (signer != hash.recover(signature)) {
+            _revert(InvalidSignature.selector);
+        }
+
         (, int256 price, , , ) = priceFeed.latestRoundData();
         uint256 normalization = priceFeed.decimals() + tokenDecimals;
         uint256 cost = (baseCost * 10 ** normalization) / uint256(price);
@@ -311,7 +361,7 @@ abstract contract BaseV2 is Ownable2Step, Pausable, ERC721A, ErrorsV2, IBaseV2 {
         emit Purchased({
             purchaser: msg.sender,
             token: token,
-            fromTokenId: _nextTokenId(),
+            fromTokenId: fromTokenId,
             quantity: quantity,
             cost: cost
         });
@@ -334,6 +384,23 @@ abstract contract BaseV2 is Ownable2Step, Pausable, ERC721A, ErrorsV2, IBaseV2 {
         emit SetBaseURI(newBaseURI, baseURI);
 
         baseURI = newBaseURI;
+    }
+
+    /**
+     * @dev Implements update signer logic.
+     */
+    function _updateSigner(address newSigner) private {
+        if (newSigner == address(0)) {
+            _revert(InvalidAddress.selector);
+        }
+
+        if (newSigner == signer) {
+            _revert(IdenticalAddressAssignment.selector);
+        }
+
+        emit SignerUpdated(newSigner, signer);
+
+        signer = newSigner;
     }
 
     /**

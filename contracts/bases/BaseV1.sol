@@ -30,6 +30,9 @@ abstract contract BaseV1 is Ownable2Step, ERC721A, ErrorsV2, IBaseV1 {
     IERC20 public constant ETH =
         IERC20(0xEeeeeEeeeEeEeeEeEeEeeEEEeeeeEeeeeeeeEEeE);
 
+    /// @dev One year time in seconds.
+    uint256 private constant _ONE_YEAR_TIME = 31_536_000 seconds;
+
     /// @inheritdoc IBaseV1
     address public immutable FEE_WALLET;
 
@@ -55,10 +58,10 @@ abstract contract BaseV1 is Ownable2Step, ERC721A, ErrorsV2, IBaseV1 {
      * @param owner_ Address of the contract owner.
      * @param name_ Token collection name.
      * @param symbol_ Token collection symbol.
-     * @param baseURI_ Base URI for computing the {tokenURI}.
      * @param feeWallet_ Address of the fee wallet.
      * @param baseCostSingle_ Base cost for a single NFT.
      * @param cap_ Cap on the number of minted tokens.
+     * @param baseURI_ Base URI for computing the {tokenURI}.
      * @param tokens_ Addresses of the tokens to be registered as payment
      * tokens.
      * @param priceFeeds_ Addresses of the price feed oracles relevant to a
@@ -68,10 +71,10 @@ abstract contract BaseV1 is Ownable2Step, ERC721A, ErrorsV2, IBaseV1 {
         address owner_,
         string memory name_,
         string memory symbol_,
-        string memory baseURI_,
         address feeWallet_,
         uint256 baseCostSingle_,
         uint256 cap_,
+        string memory baseURI_,
         IERC20[] memory tokens_,
         AggregatorV3Interface[] memory priceFeeds_
     ) Ownable(owner_) ERC721A(name_, symbol_) {
@@ -89,12 +92,13 @@ abstract contract BaseV1 is Ownable2Step, ERC721A, ErrorsV2, IBaseV1 {
             _revert(ArgumentArityMismatch.selector);
         }
 
-        _setBaseURI(baseURI_);
-
         FEE_WALLET = feeWallet_;
-        VESTING_DEADLINE = block.timestamp + 25 weeks;
+        VESTING_DEADLINE = block.timestamp + _ONE_YEAR_TIME;
         BASE_COST_SINGLE = baseCostSingle_;
+
         _CAP = cap_;
+
+        _setBaseURI(baseURI_);
 
         for (uint256 i = 0; i < length; ++i) {
             _updatePriceFeed(tokens_[i], priceFeeds_[i]);
