@@ -1,0 +1,8 @@
+// SPDX-License-Identifier: MIT
+
+pragma solidity 0.8.28;
+
+import { IERC20 } from "@openzeppelin/contracts/token/ERC20/IERC20.sol";
+
+/// @dev Arbitrary checksummed address to signify ETH.
+IERC20 constant _ETH = IERC20(0xEeeeeEeeeEeEeeEeEeEeeEEEeeeeEeeeeeeeEEeE);

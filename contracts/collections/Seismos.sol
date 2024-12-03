@@ -3,7 +3,8 @@
 pragma solidity 0.8.28;
 
 import { Ownable2Step, Ownable } from "@openzeppelin/contracts/access/Ownable2Step.sol";
-import { ERC721 } from "@openzeppelin/contracts/token/ERC721/ERC721.sol";
+import { ERC721, IERC721 } from "@openzeppelin/contracts/token/ERC721/ERC721.sol";
+import { IERC165 } from "@openzeppelin/contracts/utils/introspection/IERC165.sol";
 import { Strings } from "@openzeppelin/contracts/utils/Strings.sol";
 
 import { SeismosErrors } from "../interfaces/Errors.sol";
@@ -67,6 +68,19 @@ contract Seismos is Ownable2Step, ERC721, SeismosErrors, ISeismos {
         _setBaseURI(newBaseURI);
 
         return true;
+    }
+
+    /**
+     * @inheritdoc ERC721
+     * @dev Overridden to include this contracts `interfaceId`.
+     * @param interfaceId Id of the required interface.
+     */
+    function supportsInterface(
+        bytes4 interfaceId
+    ) public view override(ERC721, IERC165) returns (bool) {
+        return
+            interfaceId == type(ISeismos).interfaceId ||
+            super.supportsInterface(interfaceId);
     }
 
     /**

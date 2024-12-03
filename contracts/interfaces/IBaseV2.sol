@@ -26,10 +26,10 @@ interface IBaseV2 is IERC721A {
     /* ========== EVENTS ========== */
 
     /**
-     * @dev Emitted when `quantity` tokens are purchased by `purchaser`.
+     * @dev Emitted when `quantity` tokens are minted by `minter`.
      */
-    event Purchased(
-        address indexed purchaser,
+    event Mint(
+        address indexed minter,
         IERC20 token,
         uint256 fromTokenId,
         uint256 quantity,
@@ -44,13 +44,13 @@ interface IBaseV2 is IERC721A {
     /**
      * @dev Emitted when {signer} is changed to `newSigner` from `oldSigner`.
      */
-    event SignerUpdated(address indexed newSigner, address indexed oldSigner);
+    event UpdateSigner(address indexed newSigner, address indexed oldSigner);
 
     /**
      * @dev Emitted when {priceFeed} of the `token` is changed to `newPriceFeed`
      * from `oldPriceFeed`.
      */
-    event PriceFeedUpdated(
+    event UpdatePriceFeed(
         IERC20 token,
         AggregatorV3Interface newPriceFeed,
         AggregatorV3Interface oldPriceFeed
@@ -62,11 +62,11 @@ interface IBaseV2 is IERC721A {
      * @notice Mints `quantity` tokens and transfers them to the caller.
      * NOTE: Only accepts ETH as a payment method. Can only be called when
      * `unpaused`.
-     * @param quantity Amount of tokens to purchase.
+     * @param quantity Amount of tokens to mint.
      * @param deadline Expiration deadline for the signed message.
      * @param signature Signed message to determine correctness.
      */
-    function purchaseETH(
+    function mintETH(
         uint256 quantity,
         uint256 deadline,
         bytes memory signature
@@ -77,11 +77,11 @@ interface IBaseV2 is IERC721A {
      * NOTE: Only accepts registered ERC20 tokens as a payment method. Can only
      * be called when `unpaused`.
      * @param token Token to use as a payment method.
-     * @param quantity Amount of tokens to purchase.
+     * @param quantity Amount of tokens to mint.
      * @param deadline Expiration deadline for the signed message.
      * @param signature Signed message to determine correctness.
      */
-    function purchase(
+    function mint(
         IERC20 token,
         uint256 quantity,
         uint256 deadline,
@@ -134,11 +134,6 @@ interface IBaseV2 is IERC721A {
      * NOTE: Only `owner` can call this function.
      */
     function unpause() external;
-
-    /**
-     * @notice Arbitrary checksummed address to signify ETH.
-     */
-    function ETH() external view returns (IERC20);
 
     /**
      * @notice Address of the fee wallet.

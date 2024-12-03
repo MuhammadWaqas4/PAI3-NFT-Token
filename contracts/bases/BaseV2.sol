@@ -17,6 +17,8 @@ import { ERC721A, IERC721A } from "erc721a/contracts/ERC721A.sol";
 import { ErrorsV2 } from "../interfaces/Errors.sol";
 import { IBaseV2 } from "../interfaces/IBaseV2.sol";
 
+import { _ETH } from "../Globals.sol";
+
 /**
  * @title BaseV2.
  * @author PAI3 Team.
@@ -30,10 +32,6 @@ abstract contract BaseV2 is Ownable2Step, Pausable, ERC721A, ErrorsV2, IBaseV2 {
     using Strings for string;
 
     /* ========== STATE VARIABLES ========== */
-
-    /// @inheritdoc IBaseV2
-    IERC20 public constant ETH =
-        IERC20(0xEeeeeEeeeEeEeeEeEeEeeEEEeeeeEeeeeeeeEEeE);
 
     /// @dev One year time in seconds.
     uint256 private constant _ONE_YEAR_TIME = 31_536_000 seconds;
@@ -133,7 +131,7 @@ abstract contract BaseV2 is Ownable2Step, Pausable, ERC721A, ErrorsV2, IBaseV2 {
     /**
      * @inheritdoc IBaseV2
      */
-    function purchaseETH(
+    function mintETH(
         uint256 quantity,
         uint256 deadline,
         bytes memory signature
@@ -142,9 +140,9 @@ abstract contract BaseV2 is Ownable2Step, Pausable, ERC721A, ErrorsV2, IBaseV2 {
             _revert(InvalidPayableValue.selector);
         }
 
-        IERC20 token = ETH;
+        IERC20 token = _ETH;
         uint8 tokenDecimals = 18;
-        uint256 cost = _purchase(
+        uint256 cost = _mint(
             token,
             tokenDecimals,
             quantity,
@@ -164,7 +162,7 @@ abstract contract BaseV2 is Ownable2Step, Pausable, ERC721A, ErrorsV2, IBaseV2 {
     /**
      * @inheritdoc IBaseV2
      */
-    function purchase(
+    function mint(
         IERC20 token,
         uint256 quantity,
         uint256 deadline,
@@ -175,7 +173,7 @@ abstract contract BaseV2 is Ownable2Step, Pausable, ERC721A, ErrorsV2, IBaseV2 {
         }
 
         uint8 tokenDecimals = IERC20Metadata(address(token)).decimals();
-        uint256 cost = _purchase(
+        uint256 cost = _mint(
             token,
             tokenDecimals,
             quantity,
@@ -319,9 +317,9 @@ abstract contract BaseV2 is Ownable2Step, Pausable, ERC721A, ErrorsV2, IBaseV2 {
     }
 
     /**
-     * @dev Implements purchase logic.
+     * @dev Implements mint logic.
      */
-    function _purchase(
+    function _mint(
         IERC20 token,
         uint8 tokenDecimals,
         uint256 quantity,
@@ -358,8 +356,8 @@ abstract contract BaseV2 is Ownable2Step, Pausable, ERC721A, ErrorsV2, IBaseV2 {
             _revert(InvalidCost.selector);
         }
 
-        emit Purchased({
-            purchaser: msg.sender,
+        emit Mint({
+            minter: msg.sender,
             token: token,
             fromTokenId: fromTokenId,
             quantity: quantity,
@@ -398,7 +396,7 @@ abstract contract BaseV2 is Ownable2Step, Pausable, ERC721A, ErrorsV2, IBaseV2 {
             _revert(IdenticalAddressAssignment.selector);
         }
 
-        emit SignerUpdated(newSigner, signer);
+        emit UpdateSigner(newSigner, signer);
 
         signer = newSigner;
     }
@@ -422,6 +420,6 @@ abstract contract BaseV2 is Ownable2Step, Pausable, ERC721A, ErrorsV2, IBaseV2 {
 
         priceFeeds[token] = newPriceFeed;
 
-        emit PriceFeedUpdated(token, newPriceFeed, priceFeed);
+        emit UpdatePriceFeed(token, newPriceFeed, priceFeed);
     }
 }

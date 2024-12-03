@@ -19,10 +19,10 @@ interface IBaseV1 is IERC721A {
     /* ========== EVENTS ========== */
 
     /**
-     * @dev Emitted when `quantity` tokens are purchased by `purchaser`.
+     * @dev Emitted when `quantity` tokens are minted by `minter`.
      */
-    event Purchased(
-        address indexed purchaser,
+    event Mint(
+        address indexed minter,
         IERC20 token,
         uint256 fromTokenId,
         uint256 quantity,
@@ -38,7 +38,7 @@ interface IBaseV1 is IERC721A {
      * @dev Emitted when {priceFeed} of the `token` is changed to `newPriceFeed`
      * from `oldPriceFeed`.
      */
-    event PriceFeedUpdated(
+    event UpdatePriceFeed(
         IERC20 token,
         AggregatorV3Interface newPriceFeed,
         AggregatorV3Interface oldPriceFeed
@@ -50,18 +50,18 @@ interface IBaseV1 is IERC721A {
      * @notice Mints `quantity` tokens and transfers them to the caller.
      * NOTE: Only accepts ETH as a payment method. Can only be called when
      * `unpaused`.
-     * @param quantity Amount of tokens to purchase.
+     * @param quantity Amount of tokens to mint.
      */
-    function purchaseETH(uint256 quantity) external payable;
+    function mintETH(uint256 quantity) external payable;
 
     /**
      * @notice Mints `quantity` tokens and transfers them to the caller.
      * NOTE: Only accepts registered ERC20 tokens as a payment method. Can only
      * be called when `unpaused`.
      * @param token Token to use as a payment method.
-     * @param quantity Amount of tokens to purchase.
+     * @param quantity Amount of tokens to mint.
      */
-    function purchase(IERC20 token, uint256 quantity) external;
+    function mint(IERC20 token, uint256 quantity) external;
 
     /**
      * @notice Sets the value for {baseURI}.
@@ -81,11 +81,6 @@ interface IBaseV1 is IERC721A {
         IERC20 token,
         AggregatorV3Interface newPriceFeed
     ) external;
-
-    /**
-     * @notice Arbitrary checksummed address to signify ETH.
-     */
-    function ETH() external view returns (IERC20);
 
     /**
      * @notice Address of the fee wallet.

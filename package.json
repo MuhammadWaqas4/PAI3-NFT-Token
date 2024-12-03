@@ -5,8 +5,8 @@
     "scripts": {
         "compile": "hardhat compile",
         "compile-force": "hardhat compile --force",
-        "deploy-collections-staging": "hardhat run scripts/deploy-collections.js --network staging",
-        "deploy-collections": "hardhat run scripts/deploy-collections.js",
+        "deploy-staging": "hardhat run scripts/deploy.js --network staging",
+        "deploy": "hardhat run scripts/deploy.js",
         "test": "forge test",
         "format": "prettier --check --write contracts/**/*.sol {scripts/,}*.js --config .prettierrc"
     },
@@ -21,6 +21,7 @@
         "@ianvs/prettier-plugin-sort-imports": "^4.3.1",
         "@nomicfoundation/hardhat-toolbox": "^5.0.0",
         "@openzeppelin/contracts": "^5.0.2",
+        "@uniswap/v3-periphery": "^1.4.4",
         "dotenv": "^16.4.5",
         "erc721a": "^4.3.0",
         "hardhat": "^2.22.9",
