@@ -2,7 +2,7 @@
 
 pragma solidity 0.8.28;
 
-import { IWETH9 } from "@uniswap/v3-periphery/contracts/interfaces/external/IWETH9.sol";
+import { IWETH } from "./interfaces//IWETH.sol";
 
 /**
  * @title Multicall.

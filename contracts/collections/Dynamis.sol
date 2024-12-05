@@ -41,12 +41,12 @@ contract Dynamis is BaseV2 {
             "DYS",
             feeWallet_,
             1_000,
+            baseURI_,
+            tokens_,
+            priceFeeds_,
             100,
             10_000,
-            baseURI_,
-            signer_,
-            tokens_,
-            priceFeeds_
+            signer_
         )
     {}
 }

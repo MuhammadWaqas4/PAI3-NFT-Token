@@ -7,17 +7,17 @@ import { IERC721 } from "@openzeppelin/contracts/token/ERC721/IERC721.sol";
 import { IPAI3 } from "./IPAI3.sol";
 
 /**
- * @title ISeismos.
+ * @title IBaseSimple.
  * @author PAI3 Team.
- * @notice Seismos NFT collection interface.
+ * @notice BaseSimple NFT collection interface.
  */
-interface ISeismos is IERC721 {
+interface IBaseSimple is IERC721 {
     /* ========== EVENTS ========== */
 
     /**
-     * @dev Emitted when a token is purchased by `purchaser`.
+     * @dev Emitted when a token is minted by `minter`.
      */
-    event Purchased(address indexed purchaser, uint256 tokenId);
+    event Mint(address indexed minter, uint256 tokenId);
 
     /**
      * @dev Emitted when {baseURI} is changed to `newBaseURI` from `oldBaseURI`.
@@ -29,14 +29,14 @@ interface ISeismos is IERC721 {
     /**
      * @notice Mints a token and transfers it to the caller.
      */
-    function purchase() external;
+    function mint() external;
 
     /**
      * @notice Sets the value for {baseURI}.
      * NOTE: Only `owner` can call this function.
      * @param newBaseURI Value to set the {baseURI} to.
      */
-    function setBaseURI(string memory newBaseURI) external returns (bool);
+    function setBaseURI(string memory newBaseURI) external;
 
     /**
      * @dev Total number of tokens in existence.

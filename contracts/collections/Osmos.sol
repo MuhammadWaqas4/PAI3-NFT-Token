@@ -39,10 +39,10 @@ contract Osmos is BaseV1 {
             "OSS",
             feeWallet_,
             25,
-            100_000,
             baseURI_,
             tokens_,
-            priceFeeds_
+            priceFeeds_,
+            100_000
         )
     {}
 }

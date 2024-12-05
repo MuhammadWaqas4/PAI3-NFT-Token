@@ -39,10 +39,10 @@ contract Ethos is BaseV1 {
             "ETS",
             feeWallet_,
             250,
-            50_000,
             baseURI_,
             tokens_,
-            priceFeeds_
+            priceFeeds_,
+            50_000
         )
     {}
 }

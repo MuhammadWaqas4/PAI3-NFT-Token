@@ -4,46 +4,36 @@ pragma solidity 0.8.28;
 
 import { AggregatorV3Interface } from "@chainlink/contracts/src/v0.8/shared/interfaces/AggregatorV3Interface.sol";
 
-import { Ownable2Step, Ownable } from "@openzeppelin/contracts/access/Ownable2Step.sol";
 import { IERC20Metadata } from "@openzeppelin/contracts/token/ERC20/extensions/IERC20Metadata.sol";
 import { SafeERC20, IERC20, Address } from "@openzeppelin/contracts/token/ERC20/utils/SafeERC20.sol";
 import { ECDSA } from "@openzeppelin/contracts/utils/cryptography/ECDSA.sol";
 import { MessageHashUtils } from "@openzeppelin/contracts/utils/cryptography/MessageHashUtils.sol";
 import { Pausable } from "@openzeppelin/contracts/utils/Pausable.sol";
-import { Strings } from "@openzeppelin/contracts/utils/Strings.sol";
 
 import { ERC721A, IERC721A } from "erc721a/contracts/ERC721A.sol";
 
-import { ErrorsV2 } from "../interfaces/Errors.sol";
+import { BaseV2Errors } from "../interfaces/Errors.sol";
 import { IBaseV2 } from "../interfaces/IBaseV2.sol";
+
+import { Base } from "./Base.sol";
 
 import { _ETH } from "../Globals.sol";
 
 /**
  * @title BaseV2.
  * @author PAI3 Team.
- * @notice BaseV2 NFT collection.
+ * @notice Base NFT collection version 2.
  */
-abstract contract BaseV2 is Ownable2Step, Pausable, ERC721A, ErrorsV2, IBaseV2 {
+abstract contract BaseV2 is Pausable, BaseV2Errors, IBaseV2, Base {
     using SafeERC20 for IERC20;
     using Address for address payable;
     using ECDSA for bytes32;
     using MessageHashUtils for bytes32;
-    using Strings for string;
 
     /* ========== STATE VARIABLES ========== */
 
     /// @dev One year time in seconds.
     uint256 private constant _ONE_YEAR_TIME = 31_536_000 seconds;
-
-    /// @inheritdoc IBaseV2
-    address public immutable FEE_WALLET;
-
-    /// @inheritdoc IBaseV2
-    uint256 public immutable VESTING_DEADLINE;
-
-    /// @inheritdoc IBaseV2
-    uint256 public immutable BASE_COST_SINGLE;
 
     /// @dev Cap on the number of initially minted tokens.
     /// NOTE: Once this cap is reached further minting will be paused until the
@@ -58,13 +48,7 @@ abstract contract BaseV2 is Ownable2Step, Pausable, ERC721A, ErrorsV2, IBaseV2 {
     Phase public phase;
 
     /// @inheritdoc IBaseV2
-    string public baseURI;
-
-    /// @inheritdoc IBaseV2
     address public signer;
-
-    /// @inheritdoc IBaseV2
-    mapping(IERC20 token => AggregatorV3Interface priceFeed) public priceFeeds;
 
     /* ========== CONSTRUCTOR ========== */
 
@@ -75,14 +59,14 @@ abstract contract BaseV2 is Ownable2Step, Pausable, ERC721A, ErrorsV2, IBaseV2 {
      * @param symbol_ Token collection symbol.
      * @param feeWallet_ Address of the fee wallet.
      * @param baseCostSingle_ Base cost for a single NFT.
-     * @param initialCap_ Cap on the number of initially minted tokens.
-     * @param cap_ Cap on the number of minted tokens.
      * @param baseURI_ Base URI for computing the {tokenURI}.
-     * @param signer_ Address of the ECDSA signer.
      * @param tokens_ Addresses of the tokens to be registered as payment
      * tokens.
      * @param priceFeeds_ Addresses of the price feed oracles relevant to a
      * registered payment token.
+     * @param initialCap_ Cap on the number of initially minted tokens.
+     * @param cap_ Cap on the number of minted tokens.
+     * @param signer_ Address of the ECDSA signer.
      */
     constructor(
         address owner_,
@@ -90,40 +74,32 @@ abstract contract BaseV2 is Ownable2Step, Pausable, ERC721A, ErrorsV2, IBaseV2 {
         string memory symbol_,
         address feeWallet_,
         uint256 baseCostSingle_,
+        string memory baseURI_,
+        IERC20[] memory tokens_,
+        AggregatorV3Interface[] memory priceFeeds_,
         uint256 initialCap_,
         uint256 cap_,
-        string memory baseURI_,
-        address signer_,
-        IERC20[] memory tokens_,
-        AggregatorV3Interface[] memory priceFeeds_
-    ) Ownable(owner_) ERC721A(name_, symbol_) {
-        if (feeWallet_ == address(0)) {
-            _revert(InvalidAddress.selector);
-        }
-
-        if (baseCostSingle_ == 0 || cap_ == 0) {
+        address signer_
+    )
+        Base(
+            owner_,
+            name_,
+            symbol_,
+            feeWallet_,
+            baseCostSingle_,
+            baseURI_,
+            tokens_,
+            priceFeeds_
+        )
+    {
+        if (cap_ == 0 || initialCap_ == 0) {
             _revert(InvalidValue.selector);
         }
-
-        uint256 length = tokens_.length;
-
-        if (length != priceFeeds_.length) {
-            _revert(ArgumentArityMismatch.selector);
-        }
-
-        FEE_WALLET = feeWallet_;
-        VESTING_DEADLINE = block.timestamp + _ONE_YEAR_TIME;
-        BASE_COST_SINGLE = baseCostSingle_;
 
         _INITIAL_CAP = initialCap_;
         _CAP = cap_;
 
-        _setBaseURI(baseURI_);
         _updateSigner(signer_);
-
-        for (uint256 i = 0; i < length; ++i) {
-            _updatePriceFeed(tokens_[i], priceFeeds_[i]);
-        }
     }
 
     /* ========== FUNCTIONS ========== */
@@ -131,7 +107,7 @@ abstract contract BaseV2 is Ownable2Step, Pausable, ERC721A, ErrorsV2, IBaseV2 {
     /**
      * @inheritdoc IBaseV2
      */
-    function mintETH(
+    function mintWithETH(
         uint256 quantity,
         uint256 deadline,
         bytes memory signature
@@ -142,7 +118,7 @@ abstract contract BaseV2 is Ownable2Step, Pausable, ERC721A, ErrorsV2, IBaseV2 {
 
         IERC20 token = _ETH;
         uint8 tokenDecimals = 18;
-        uint256 cost = _mint(
+        uint256 cost = _processMint(
             token,
             tokenDecimals,
             quantity,
@@ -169,11 +145,11 @@ abstract contract BaseV2 is Ownable2Step, Pausable, ERC721A, ErrorsV2, IBaseV2 {
         bytes memory signature
     ) external {
         if (address(token) == address(0)) {
-            _revert(InvalidPaymentToken.selector);
+            _revert(InvalidAddress.selector);
         }
 
         uint8 tokenDecimals = IERC20Metadata(address(token)).decimals();
-        uint256 cost = _mint(
+        uint256 cost = _processMint(
             token,
             tokenDecimals,
             quantity,
@@ -189,13 +165,6 @@ abstract contract BaseV2 is Ownable2Step, Pausable, ERC721A, ErrorsV2, IBaseV2 {
     /**
      * @inheritdoc IBaseV2
      */
-    function setBaseURI(string memory newBaseURI) external onlyOwner {
-        _setBaseURI(newBaseURI);
-    }
-
-    /**
-     * @inheritdoc IBaseV2
-     */
     function updateSigner(address newSigner) external onlyOwner {
         _updateSigner(newSigner);
     }
@@ -203,19 +172,9 @@ abstract contract BaseV2 is Ownable2Step, Pausable, ERC721A, ErrorsV2, IBaseV2 {
     /**
      * @inheritdoc IBaseV2
      */
-    function updatePriceFeed(
-        IERC20 token,
-        AggregatorV3Interface newPriceFeed
-    ) external onlyOwner {
-        _updatePriceFeed(token, newPriceFeed);
-    }
-
-    /**
-     * @inheritdoc IBaseV2
-     */
     function bumpPhase() external onlyOwner {
         if (phase != Phase.FIRST) {
-            _revert(PhaseAlreadyBumped.selector);
+            _revert(AlreadyBumpedPhase.selector);
         }
 
         _unpause();
@@ -237,31 +196,6 @@ abstract contract BaseV2 is Ownable2Step, Pausable, ERC721A, ErrorsV2, IBaseV2 {
     }
 
     /**
-     * @inheritdoc ERC721A
-     * @dev Overridden to add vesting check.
-     */
-    function transferFrom(
-        address from,
-        address to,
-        uint256 tokenId
-    ) public payable override(ERC721A, IERC721A) {
-        if (block.timestamp < VESTING_DEADLINE) {
-            address sender = msg.sender;
-            uint32 size;
-
-            assembly {
-                size := extcodesize(sender)
-            }
-
-            if (size > 0) {
-                _revert(VestingDeadlineNotReached.selector);
-            }
-        }
-
-        super.transferFrom(from, to, tokenId);
-    }
-
-    /**
      * @inheritdoc IBaseV2
      */
     function cap() public view returns (uint256) {
@@ -275,7 +209,7 @@ abstract contract BaseV2 is Ownable2Step, Pausable, ERC721A, ErrorsV2, IBaseV2 {
      */
     function supportsInterface(
         bytes4 interfaceId
-    ) public view override(ERC721A, IERC721A) returns (bool) {
+    ) public view override(Base, IERC721A) returns (bool) {
         return
             interfaceId == type(IBaseV2).interfaceId ||
             super.supportsInterface(interfaceId);
@@ -301,25 +235,9 @@ abstract contract BaseV2 is Ownable2Step, Pausable, ERC721A, ErrorsV2, IBaseV2 {
     }
 
     /**
-     * @inheritdoc ERC721A
-     * @dev Overridden to return a state variable.
+     * @dev Implements process mint logic.
      */
-    function _baseURI() internal view override returns (string memory) {
-        return baseURI;
-    }
-
-    /**
-     * @inheritdoc ERC721A
-     * @dev Overridden to change {_startTokenId} to `1`.
-     */
-    function _startTokenId() internal pure override returns (uint256) {
-        return 1;
-    }
-
-    /**
-     * @dev Implements mint logic.
-     */
-    function _mint(
+    function _processMint(
         IERC20 token,
         uint8 tokenDecimals,
         uint256 quantity,
@@ -327,7 +245,7 @@ abstract contract BaseV2 is Ownable2Step, Pausable, ERC721A, ErrorsV2, IBaseV2 {
         bytes memory signature
     ) private whenNotPaused returns (uint256) {
         if (quantity == 0) {
-            _revert(InvalidQuantity.selector);
+            _revert(InvalidValue.selector);
         }
 
         uint256 baseCost = quantity * BASE_COST_SINGLE;
@@ -335,7 +253,7 @@ abstract contract BaseV2 is Ownable2Step, Pausable, ERC721A, ErrorsV2, IBaseV2 {
         AggregatorV3Interface priceFeed = priceFeeds[token];
 
         if (address(priceFeed) == address(0)) {
-            _revert(PaymentTokenNotRegistered.selector);
+            _revert(IncorrectPaymentToken.selector);
         }
 
         uint256 fromTokenId = _nextTokenId();
@@ -345,15 +263,15 @@ abstract contract BaseV2 is Ownable2Step, Pausable, ERC721A, ErrorsV2, IBaseV2 {
         ).toEthSignedMessageHash();
 
         if (signer != hash.recover(signature)) {
-            _revert(InvalidSignature.selector);
+            _revert(IncorrectSignatureRecovery.selector);
         }
 
         (, int256 price, , , ) = priceFeed.latestRoundData();
         uint256 normalization = priceFeed.decimals() + tokenDecimals;
         uint256 cost = (baseCost * 10 ** normalization) / uint256(price);
 
-        if (cost == 0) {
-            _revert(InvalidCost.selector);
+        if (cost < BASE_COST_SINGLE) {
+            _revert(InsufficientCost.selector);
         }
 
         emit Mint({
@@ -368,23 +286,6 @@ abstract contract BaseV2 is Ownable2Step, Pausable, ERC721A, ErrorsV2, IBaseV2 {
     }
 
     /**
-     * @dev Implements set base uri logic.
-     */
-    function _setBaseURI(string memory newBaseURI) private {
-        if (bytes(newBaseURI).length == 0) {
-            _revert(InvalidString.selector);
-        }
-
-        if (newBaseURI.equal(baseURI)) {
-            _revert(IdenticalStringAssignment.selector);
-        }
-
-        emit SetBaseURI(newBaseURI, baseURI);
-
-        baseURI = newBaseURI;
-    }
-
-    /**
      * @dev Implements update signer logic.
      */
     function _updateSigner(address newSigner) private {
@@ -393,33 +294,11 @@ abstract contract BaseV2 is Ownable2Step, Pausable, ERC721A, ErrorsV2, IBaseV2 {
         }
 
         if (newSigner == signer) {
-            _revert(IdenticalAddressAssignment.selector);
+            _revert(InvalidAssignment.selector);
         }
 
         emit UpdateSigner(newSigner, signer);
 
         signer = newSigner;
-    }
-
-    /**
-     * @dev Implements update price feed logic.
-     */
-    function _updatePriceFeed(
-        IERC20 token,
-        AggregatorV3Interface newPriceFeed
-    ) private {
-        AggregatorV3Interface priceFeed = priceFeeds[token];
-
-        if (
-            address(token) == address(0) ||
-            (address(priceFeed) == address(0) &&
-                address(newPriceFeed) == address(0))
-        ) {
-            _revert(InvalidAddress.selector);
-        }
-
-        priceFeeds[token] = newPriceFeed;
-
-        emit UpdatePriceFeed(token, newPriceFeed, priceFeed);
     }
 }

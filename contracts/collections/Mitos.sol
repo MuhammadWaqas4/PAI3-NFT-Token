@@ -39,10 +39,10 @@ contract Mitos is BaseV1 {
             "MIS",
             feeWallet_,
             100,
-            50_000,
             baseURI_,
             tokens_,
-            priceFeeds_
+            priceFeeds_,
+            50_000
         )
     {}
 }
