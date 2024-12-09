@@ -35,7 +35,7 @@ abstract contract Base is Ownable2Step, ERC721A, BaseErrors, IBase {
     address public immutable FEE_WALLET;
 
     /// @inheritdoc IBase
-    uint256 public immutable VESTING_DEADLINE;
+    uint256 public immutable VESTING_EXPIRY;
 
     /// @inheritdoc IBase
     uint256 public immutable BASE_COST_SINGLE;
@@ -55,11 +55,11 @@ abstract contract Base is Ownable2Step, ERC721A, BaseErrors, IBase {
      * @param symbol_ Token collection symbol.
      * @param feeWallet_ Address of the fee wallet.
      * @param baseCostSingle_ Base cost for a single NFT.
-     * @param baseURI_ Base URI for computing the {tokenURI}.
+     * @param baseURI_ Base URI for computing the tokenURI.
      * @param tokens_ Addresses of the tokens to be registered as payment
      * tokens.
-     * @param priceFeeds_ Addresses of the price feed oracles relevant to a
-     * registered payment token.
+     * @param priceFeeds_ Addresses of the price feed relevant to a registered
+     * payment token.
      */
     constructor(
         address owner_,
@@ -90,7 +90,7 @@ abstract contract Base is Ownable2Step, ERC721A, BaseErrors, IBase {
         }
 
         FEE_WALLET = feeWallet_;
-        VESTING_DEADLINE = block.timestamp + _ONE_YEAR_TIME;
+        VESTING_EXPIRY = block.timestamp + _ONE_YEAR_TIME;
         BASE_COST_SINGLE = baseCostSingle_;
 
         _setBaseURI(baseURI_);
@@ -128,16 +128,18 @@ abstract contract Base is Ownable2Step, ERC721A, BaseErrors, IBase {
         address to,
         uint256 tokenId
     ) public payable override(ERC721A, IERC721A) {
-        if (block.timestamp < VESTING_DEADLINE) {
+        if (block.timestamp < VESTING_EXPIRY) {
             address sender = msg.sender;
-            uint32 size;
+            uint32 senderSize;
+            uint32 toSize;
 
             assembly {
-                size := extcodesize(sender)
+                senderSize := extcodesize(sender)
+                toSize := extcodesize(to)
             }
 
-            if (size > 0) {
-                _revert(SubceededVestingDeadline.selector);
+            if (senderSize > 0 || toSize > 0) {
+                _revert(BeforeVestingExpiry.selector);
             }
         }
 
@@ -159,7 +161,7 @@ abstract contract Base is Ownable2Step, ERC721A, BaseErrors, IBase {
 
     /**
      * @inheritdoc ERC721A
-     * @dev Overridden to return a state variable.
+     * @dev Overridden to return {baseURI}.
      */
     function _baseURI() internal view override returns (string memory) {
         return baseURI;
@@ -174,7 +176,7 @@ abstract contract Base is Ownable2Step, ERC721A, BaseErrors, IBase {
     }
 
     /**
-     * @dev Implements set base uri logic.
+     * @dev Implements {setBaseUri} logic.
      */
     function _setBaseURI(string memory newBaseURI) private {
         if (bytes(newBaseURI).length == 0) {
@@ -185,13 +187,13 @@ abstract contract Base is Ownable2Step, ERC721A, BaseErrors, IBase {
             _revert(InvalidAssignment.selector);
         }
 
-        emit SetBaseURI(newBaseURI, baseURI);
+        emit SetBaseURI({ newBaseURI: newBaseURI, oldBaseURI: baseURI });
 
         baseURI = newBaseURI;
     }
 
     /**
-     * @dev Implements update price feed logic.
+     * @dev Implements {updatePriceFeed} logic.
      */
     function _updatePriceFeed(
         IERC20 token,
@@ -209,6 +211,10 @@ abstract contract Base is Ownable2Step, ERC721A, BaseErrors, IBase {
 
         priceFeeds[token] = newPriceFeed;
 
-        emit UpdatePriceFeed(token, newPriceFeed, priceFeed);
+        emit UpdatePriceFeed({
+            token: token,
+            newPriceFeed: newPriceFeed,
+            oldPriceFeed: priceFeed
+        });
     }
 }

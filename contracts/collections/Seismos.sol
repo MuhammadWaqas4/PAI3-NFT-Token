@@ -15,7 +15,7 @@ contract Seismos is BaseSimple {
     /**
      * @dev Constructor. Assigns ownership and initializes variables.
      * @param owner_ Address of the contract owner.
-     * @param baseURI_ Base URI for computing the {tokenURI}.
+     * @param baseURI_ Base URI for computing the tokenURI.
      */
     constructor(
         address owner_,

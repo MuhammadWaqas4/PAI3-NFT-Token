@@ -20,11 +20,11 @@ contract Mitos is BaseV1 {
      * @dev Constructor. Assigns ownership and initializes variables.
      * @param owner_ Address of the contract owner.
      * @param feeWallet_ Address of the fee wallet.
-     * @param baseURI_ Base URI for computing the {tokenURI}.
+     * @param baseURI_ Base URI for computing the tokenURI.
      * @param tokens_ Addresses of the tokens to be registered as payment
      * tokens.
-     * @param priceFeeds_ Addresses of the price feed oracles relevant to a
-     * registered payment token.
+     * @param priceFeeds_ Addresses of the price feed relevant to a registered
+     * payment token.
      */
     constructor(
         address owner_,

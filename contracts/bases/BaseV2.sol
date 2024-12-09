@@ -35,13 +35,13 @@ abstract contract BaseV2 is Pausable, BaseV2Errors, IBaseV2, Base {
     /// @dev One year time in seconds.
     uint256 private constant _ONE_YEAR_TIME = 31_536_000 seconds;
 
-    /// @dev Cap on the number of initially minted tokens.
+    /// @dev Cap on the number of initially minted `tokens`.
     /// NOTE: Once this cap is reached further minting will be paused until the
     /// next phase.
     uint256 private immutable _INITIAL_CAP;
 
-    /// @dev Cap on the number of minted tokens.
-    /// NOTE: This value is inclusive of `_INITIAL_CAP`.
+    /// @dev Cap on the number of minted `tokens`.
+    /// NOTE: This value is inclusive of {_INITIAL_CAP}.
     uint256 private immutable _CAP;
 
     /// @inheritdoc IBaseV2
@@ -59,14 +59,14 @@ abstract contract BaseV2 is Pausable, BaseV2Errors, IBaseV2, Base {
      * @param symbol_ Token collection symbol.
      * @param feeWallet_ Address of the fee wallet.
      * @param baseCostSingle_ Base cost for a single NFT.
-     * @param baseURI_ Base URI for computing the {tokenURI}.
+     * @param baseURI_ Base URI for computing the tokenURI.
      * @param tokens_ Addresses of the tokens to be registered as payment
      * tokens.
-     * @param priceFeeds_ Addresses of the price feed oracles relevant to a
-     * registered payment token.
+     * @param priceFeeds_ Addresses of the price feed relevant to a registered
+     * payment token.
      * @param initialCap_ Cap on the number of initially minted tokens.
      * @param cap_ Cap on the number of minted tokens.
-     * @param signer_ Address of the ECDSA signer.
+     * @param signer_ Address of the signatrue signer.
      */
     constructor(
         address owner_,
@@ -112,6 +112,10 @@ abstract contract BaseV2 is Pausable, BaseV2Errors, IBaseV2, Base {
         uint256 deadline,
         bytes memory signature
     ) external payable {
+        if (block.timestamp > deadline) {
+            _revert(AfterSignatureDeadline.selector);
+        }
+
         if (msg.value == 0) {
             _revert(InvalidPayableValue.selector);
         }
@@ -217,7 +221,7 @@ abstract contract BaseV2 is Pausable, BaseV2Errors, IBaseV2, Base {
 
     /**
      * @inheritdoc ERC721A
-     * @dev Overridden to include cap on token's total supply.
+     * @dev Overridden to introduce {cap} to `token`'s {totalSupply}.
      */
     function _mint(address to, uint256 quantity) internal override {
         super._mint(to, quantity);
@@ -235,7 +239,7 @@ abstract contract BaseV2 is Pausable, BaseV2Errors, IBaseV2, Base {
     }
 
     /**
-     * @dev Implements process mint logic.
+     * @dev Implements {mint} logic.
      */
     function _processMint(
         IERC20 token,
@@ -286,7 +290,7 @@ abstract contract BaseV2 is Pausable, BaseV2Errors, IBaseV2, Base {
     }
 
     /**
-     * @dev Implements update signer logic.
+     * @dev Implements {updateSigner} logic.
      */
     function _updateSigner(address newSigner) private {
         if (newSigner == address(0)) {
@@ -297,7 +301,7 @@ abstract contract BaseV2 is Pausable, BaseV2Errors, IBaseV2, Base {
             _revert(InvalidAssignment.selector);
         }
 
-        emit UpdateSigner(newSigner, signer);
+        emit UpdateSigner({ newSigner: newSigner, oldSigner: signer });
 
         signer = newSigner;
     }

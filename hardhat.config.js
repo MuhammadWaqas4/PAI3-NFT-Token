@@ -17,6 +17,11 @@ module.exports = {
     },
     defaultNetwork: "mainnet",
     networks: {
+        hardhat: {
+            forking: {
+                url: process.env.URL_STAGING
+            }
+        },
         staging: {
             url: process.env.URL_STAGING ? process.env.URL_STAGING : "https://rpc.example.org/",
             accounts: [

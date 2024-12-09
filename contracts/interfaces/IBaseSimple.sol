@@ -15,37 +15,39 @@ interface IBaseSimple is IERC721 {
     /* ========== EVENTS ========== */
 
     /**
-     * @dev Emitted when a token is minted by `minter`.
+     * @dev Emitted when `token` is minted by `minter`.
      */
     event Mint(address indexed minter, uint256 tokenId);
 
     /**
-     * @dev Emitted when {baseURI} is changed to `newBaseURI` from `oldBaseURI`.
+     * @dev Emitted when `base URI` is changed to `newBaseURI` from
+     * `oldBaseURI`.
      */
     event SetBaseURI(string newBaseURI, string oldBaseURI);
 
     /* ========== FUNCTIONS ========== */
 
     /**
-     * @notice Mints a token and transfers it to the caller.
+     * @notice Mints `token` and transfers it to the `caller`.
      */
     function mint() external;
 
     /**
-     * @notice Sets the value for {baseURI}.
+     * @notice Sets the value for `baseURI`.
      * NOTE: Only `owner` can call this function.
-     * @param newBaseURI Value to set the {baseURI} to.
+     * @param newBaseURI Value to set the baseURI to.
      */
     function setBaseURI(string memory newBaseURI) external;
 
     /**
-     * @dev Total number of tokens in existence.
+     * @dev Total number of `tokens` in existence.
      */
     function totalSupply() external view returns (uint256);
 
     /**
-     * @notice Base URI for computing {tokenURI}. If set, the resulting URI for
-     * each token will be the concatenation of the `baseURI` and the `tokenId`.
+     * @notice `Base URI` for computing {tokenURI}. If set, the resulting URI
+     * for each `token` will be the concatenation of the `base URI` and the
+     * `tokenId`.
      */
     function baseURI() external view returns (string memory);
 }

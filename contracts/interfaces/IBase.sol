@@ -17,23 +17,13 @@ interface IBase is IERC721A {
     /* ========== EVENTS ========== */
 
     /**
-     * @dev Emitted when `quantity` tokens are minted by `minter`.
-     */
-    event Mint(
-        address indexed minter,
-        IERC20 token,
-        uint256 fromTokenId,
-        uint256 quantity,
-        uint256 cost
-    );
-
-    /**
-     * @dev Emitted when {baseURI} is changed to `newBaseURI` from `oldBaseURI`.
+     * @dev Emitted when `base URI` is changed to `newBaseURI` from
+     * `oldBaseURI`.
      */
     event SetBaseURI(string newBaseURI, string oldBaseURI);
 
     /**
-     * @dev Emitted when {priceFeed} of the `token` is changed to `newPriceFeed`
+     * @dev Emitted when `price feed` of a `token` is changed to `newPriceFeed`
      * from `oldPriceFeed`.
      */
     event UpdatePriceFeed(
@@ -45,17 +35,17 @@ interface IBase is IERC721A {
     /* ========== FUNCTIONS ========== */
 
     /**
-     * @notice Sets the value for {baseURI}.
+     * @notice Sets the value for `base URI`.
      * NOTE: Only `owner` can call this function.
-     * @param newBaseURI Value to set the {baseURI} to.
+     * @param newBaseURI Value to set the base URI to.
      */
     function setBaseURI(string memory newBaseURI) external;
 
     /**
-     * @notice Adds, removes or updates the price feed oracle of a given token.
+     * @notice Adds, removes or updates the `price feed` of a given `token`.
      * NOTE: Only `owner` can call this function.
      * @param token Address of the token.
-     * @param newPriceFeed Price feed oracle to add, remove or update for the
+     * @param newPriceFeed Price feed to add, remove or update for the
      * given token.
      */
     function updatePriceFeed(
@@ -69,24 +59,25 @@ interface IBase is IERC721A {
     function FEE_WALLET() external view returns (address);
 
     /**
-     * @notice Time period until NFTs are vested.
+     * @notice Time period until `tokens` are vested.
      */
-    function VESTING_DEADLINE() external view returns (uint256);
+    function VESTING_EXPIRY() external view returns (uint256);
 
     /**
-     * @notice Base cost for a single NFT.
+     * @notice Base cost for a single `token`.
      */
     function BASE_COST_SINGLE() external view returns (uint256);
 
     /**
-     * @notice Base URI for computing {tokenURI}. If set, the resulting URI for
-     * each token will be the concatenation of the `baseURI` and the `tokenId`.
+     * @notice `Base URI` for computing {tokenURI}. If set, the resulting URI
+     * for each `token` will be the concatenation of the `base URI` and the
+     * `tokenId`.
      */
     function baseURI() external view returns (string memory);
 
     /**
-     * @notice Address of the price feed oracle relevant to a registered payment
-     * token.
+     * @notice Address of the `price feed` relevant to a registered payment
+     * `token`.
      * @param token Address of the registered payment token.
      */
     function priceFeeds(

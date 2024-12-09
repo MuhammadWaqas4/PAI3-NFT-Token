@@ -38,7 +38,7 @@ abstract contract BaseSimple is
      * @param owner_ Address of the contract owner.
      * @param name_ Token collection name.
      * @param symbol_ Token collection symbol.
-     * @param baseURI_ Base URI for computing the {tokenURI}.
+     * @param baseURI_ Base URI for computing the tokenURI.
      */
     constructor(
         address owner_,
@@ -88,14 +88,14 @@ abstract contract BaseSimple is
 
     /**
      * @inheritdoc ERC721
-     * @dev Overridden to return a state variable.
+     * @dev Overridden to return {baseURI}.
      */
     function _baseURI() internal view override returns (string memory) {
         return baseURI;
     }
 
     /**
-     * @dev Implements set base uri logic.
+     * @dev Implements {setBaseUri} logic.
      */
     function _setBaseURI(string memory newBaseURI) private {
         if (bytes(newBaseURI).length == 0) {
@@ -106,7 +106,7 @@ abstract contract BaseSimple is
             _revert(InvalidAssignment.selector);
         }
 
-        emit SetBaseURI(newBaseURI, baseURI);
+        emit SetBaseURI({ newBaseURI: newBaseURI, oldBaseURI: baseURI });
 
         baseURI = newBaseURI;
     }

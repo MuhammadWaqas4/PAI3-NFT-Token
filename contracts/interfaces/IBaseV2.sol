@@ -22,6 +22,17 @@ interface IBaseV2 is IBase {
     /* ========== EVENTS ========== */
 
     /**
+     * @dev Emitted when `quantity` of `tokens` is minted by `minter`.
+     */
+    event Mint(
+        address indexed minter,
+        IERC20 token,
+        uint256 fromTokenId,
+        uint256 quantity,
+        uint256 cost
+    );
+
+    /**
      * @dev Emitted when {signer} is changed to `newSigner` from `oldSigner`.
      */
     event UpdateSigner(address indexed newSigner, address indexed oldSigner);
@@ -29,9 +40,9 @@ interface IBaseV2 is IBase {
     /* ========== FUNCTIONS ========== */
 
     /**
-     * @notice Mints `quantity` tokens and transfers them to the caller.
-     * NOTE: Only accepts ETH as a payment method. Can only be called when
-     * `unpaused`.
+     * @notice Mints `quantity` of `tokens` and transfers them to the `caller`.
+     * NOTE: `Payable value` must be given. Only accepts `ETH` as a payment
+     * method. Can only be called when `unpaused`.
      * @param quantity Amount of tokens to mint.
      * @param deadline Expiration deadline for the signed message.
      * @param signature Signed message to determine correctness.
@@ -43,10 +54,10 @@ interface IBaseV2 is IBase {
     ) external payable;
 
     /**
-     * @notice Mints `quantity` tokens and transfers them to the caller.
-     * NOTE: Only accepts registered ERC20 tokens as a payment method. Can only
-     * be called when `unpaused`.
-     * @param token Token to use as a payment method.
+     * @notice Mints `quantity` of `tokens` and transfers them to the `caller`.
+     * NOTE: Only accepts a registered ERC20 `token` as a payment method. Can
+     * only be called when `unpaused`.
+     * @param token ERC20 token to use as a payment method.
      * @param quantity Amount of tokens to mint.
      * @param deadline Expiration deadline for the signed message.
      * @param signature Signed message to determine correctness.
@@ -59,29 +70,31 @@ interface IBaseV2 is IBase {
     ) external;
 
     /**
-     * @notice Updates the address of the ECDSA {signer}.
+     * @notice Updates the address of the `signature` {signer}.
      * NOTE: Only `owner` can call this function.
      * @param newSigner Address of the new data signer.
      */
     function updateSigner(address newSigner) external;
 
     /**
-     * @notice Changes the state of the contract from `paused` to `unpaused`
-     * after the first phase has ended and bumps the phase.
+     * @notice Bumps the `phase` after the first `phase` has ended and changes
+     * the state of the contract from `paused` to `unpaused`.
      * NOTE: Only `owner` can call this function. Can only be called when
      * `paused`.
      */
     function bumpPhase() external;
 
     /**
-     * @notice Change the state of the contract from unpaused to paused.
-     * NOTE: Only `owner` can call this function.
+     * @notice Change the state of the contract from `unpaused` to `paused`.
+     * NOTE: Only `owner` can call this function. Can only be called when
+     * `unpaused`.
      */
     function pause() external;
 
     /**
-     * @notice Change the state of the contract from paused to unpaused.
-     * NOTE: Only `owner` can call this function.
+     * @notice Change the state of the contract from `paused` to `unpaused`.
+     * NOTE: Only `owner` can call this function. Can only be called when
+     * `paused`.
      */
     function unpause() external;
 
@@ -91,12 +104,12 @@ interface IBaseV2 is IBase {
     function phase() external view returns (Phase);
 
     /**
-     * @notice Address of the ECDSA signer.
+     * @notice Address of the `signature` signer.
      */
     function signer() external view returns (address);
 
     /**
-     * @notice Cap on the token's total supply.
+     * @notice Cap on the `token`'s {totalSupply}.
      */
     function cap() external view returns (uint256);
 }

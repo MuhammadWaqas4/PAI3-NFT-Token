@@ -43,11 +43,10 @@ interface BaseErrors {
     error InvalidValue();
 
     /**
-     * @dev Indicates a failure with the `block timestamp` if the `block
-     * timestamp` when a `transfer` or `approval` is performed subceeds the
-     * `vesting deadline`.
+     * @dev Indicates a failure with the `expiry` if the `expiry` has not been
+     * crossed when a `transfer` or `approval` is performed.
      */
-    error SubceededVestingDeadline();
+    error BeforeVestingExpiry();
 }
 
 /**
@@ -107,8 +106,8 @@ interface BaseV1Errors {
  */
 interface BaseV2Errors {
     /**
-     * @dev Indicates a failure with the `phase` if the `phase` has already been
-     * bumped.
+     * @dev Indicates a failure with the `phase` if the `phase` is being bumped
+     * again.
      */
     error AlreadyBumpedPhase();
 
@@ -117,6 +116,12 @@ interface BaseV2Errors {
      * exceeds the `cap`.
      */
     error ExceededCap();
+
+    /**
+     * @dev Indicates a failure with the `deadline` if the `deadline` has been
+     * crossed when a signature is verified.
+     */
+    error AfterSignatureDeadline();
 
     /**
      * @dev Indicates a failure with the `token` if the `token` is not

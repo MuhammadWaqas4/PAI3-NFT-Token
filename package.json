@@ -7,8 +7,8 @@
         "compile-force": "hardhat compile --force",
         "deploy-staging": "hardhat run scripts/deploy.js --network staging",
         "deploy": "hardhat run scripts/deploy.js",
-        "test": "forge test",
-        "format": "prettier --check --write contracts/**/*.sol {scripts/,}*.js --config .prettierrc"
+        "test": "hardhat test --network hardhat",
+        "format": "prettier --check --write contracts/**/*.sol {scripts/,}*.js test/*.js --config .prettierrc"
     },
     "repository": {
         "type": "git",

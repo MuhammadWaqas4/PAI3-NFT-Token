@@ -42,11 +42,11 @@ abstract contract BaseV1 is BaseV1Errors, IBaseV1, Base {
      * @param symbol_ Token collection symbol.
      * @param feeWallet_ Address of the fee wallet.
      * @param baseCostSingle_ Base cost for a single NFT.
-     * @param baseURI_ Base URI for computing the {tokenURI}.
+     * @param baseURI_ Base URI for computing the tokenURI.
      * @param tokens_ Addresses of the tokens to be registered as payment
      * tokens.
-     * @param priceFeeds_ Addresses of the price feed oracles relevant to a
-     * registered payment token.
+     * @param priceFeeds_ Addresses of the price feed relevant to a registered
+     * payment token.
      * @param cap_ Cap on the number of minted tokens.
      */
     constructor(
@@ -139,7 +139,7 @@ abstract contract BaseV1 is BaseV1Errors, IBaseV1, Base {
 
     /**
      * @inheritdoc ERC721A
-     * @dev Overridden to include cap on token's total supply.
+     * @dev Overridden to introduce {cap} to `token`'s {totalSupply}.
      */
     function _mint(address to, uint256 quantity) internal override {
         super._mint(to, quantity);
@@ -153,7 +153,7 @@ abstract contract BaseV1 is BaseV1Errors, IBaseV1, Base {
     }
 
     /**
-     * @dev Implements process mint logic.
+     * @dev Implements {mint} logic.
      */
     function _processMint(
         IERC20 token,
