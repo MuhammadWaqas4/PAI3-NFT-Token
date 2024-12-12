@@ -1,23 +1,32 @@
 {
     "arrowParens": "always",
     "bracketSpacing": true,
-    "importOrderTypeScriptVersion": "5.0.0",
     "overrides": [
         {
-            "files": "*.js",
+            "files": "*.sol",
             "options": {
-                "printWidth": 120
+                "printWidth": 80
+            }
+        },
+        {
+            "files": [
+                "*.json",
+                ".prettierrc"
+            ],
+            "options": {
+                "parser": "json-stringify"
             }
         }
     ],
     "plugins": [
-        "@ianvs/prettier-plugin-sort-imports",
-        "prettier-package-json",
-        "prettier-plugin-solidity"
+        "prettier-plugin-package",
+        "prettier-plugin-solidity",
+        "prettier-plugin-sort-imports"
     ],
-    "printWidth": 80,
+    "printWidth": 120,
     "semi": true,
     "singleQuote": false,
+    "sortingMethod": "alphabetical",
     "tabWidth": 4,
     "trailingComma": "none",
     "useTabs": false

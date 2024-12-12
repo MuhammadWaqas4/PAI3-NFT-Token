@@ -39,20 +39,20 @@ async function main() {
 
     // Deploying contracts.
     const dynamisAddress = await deploy("Dynamis", dynamisConstructorArguments);
-    const ethosAddress = await deploy("Ethos", ethosConstructorArguments);
-    const mitosAddress = await deploy("Mitos", mitosConstructorArguments);
-    const osmosAddress = await deploy("Osmos", osmosConstructorArguments);
-    const seismosAddress = await deploy("Seismos", seismosConstructorArguments);
+    // const ethosAddress = await deploy("Ethos", ethosConstructorArguments);
+    // const mitosAddress = await deploy("Mitos", mitosConstructorArguments);
+    // const osmosAddress = await deploy("Osmos", osmosConstructorArguments);
+    // const seismosAddress = await deploy("Seismos", seismosConstructorArguments);
 
     // Waiting for block explorer.
     await new Promise((resolve) => setTimeout(resolve, 60000));
 
     // Verifying contracts.
     await verify(dynamisAddress, dynamisConstructorArguments);
-    await verifyWithPath(ethosAddress, "contracts/collections/Ethos.sol:Ethos", ethosConstructorArguments);
-    await verifyWithPath(mitosAddress, "contracts/collections/Mitos.sol:Mitos", mitosConstructorArguments);
-    await verifyWithPath(osmosAddress, "contracts/collections/Osmos.sol:Osmos", osmosConstructorArguments);
-    await verify(seismosAddress, seismosConstructorArguments);
+    // await verifyWithPath(ethosAddress, "contracts/collections/Ethos.sol:Ethos", ethosConstructorArguments);
+    // await verifyWithPath(mitosAddress, "contracts/collections/Mitos.sol:Mitos", mitosConstructorArguments);
+    // await verifyWithPath(osmosAddress, "contracts/collections/Osmos.sol:Osmos", osmosConstructorArguments);
+    // await verify(seismosAddress, seismosConstructorArguments);
 
     // Exiting.
     process.exit();

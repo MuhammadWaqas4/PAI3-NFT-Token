@@ -1,5 +1,5 @@
+const { loadFixture } = require("@nomicfoundation/hardhat-toolbox/network-helpers");
 const hre = require("hardhat");
-const { loadFixture, time } = require("@nomicfoundation/hardhat-toolbox/network-helpers");
 
 describe("Dynamis", function () {
     async function deploy() {
