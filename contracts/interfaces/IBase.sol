@@ -17,6 +17,22 @@ interface IBase is IERC721A {
     /* ========== EVENTS ========== */
 
     /**
+     * @dev Emitted when `quantity` of `tokens` is minted by `minter`.
+     */
+    event Mint(
+        address indexed minter,
+        IERC20 token,
+        uint256 fromTokenId,
+        uint256 quantity,
+        uint256 cost
+    );
+
+    /**
+     * @dev Emitted when {signer} is changed to `newSigner` from `oldSigner`.
+     */
+    event UpdateSigner(address indexed newSigner, address indexed oldSigner);
+
+    /**
      * @dev Emitted when `base URI` is changed to `newBaseURI` from
      * `oldBaseURI`.
      */
@@ -33,6 +49,42 @@ interface IBase is IERC721A {
     );
 
     /* ========== FUNCTIONS ========== */
+
+    /**
+     * @notice Mints `quantity` of `tokens` and transfers them to the `caller`.
+     * NOTE: `Payable value` must be given. Only accepts `ETH` as a payment
+     * method.
+     * @param quantity Amount of tokens to mint.
+     * @param deadline Expiration deadline for the signed message.
+     * @param signature Signed message to determine correctness.
+     */
+    function mintWithETH(
+        uint256 quantity,
+        uint256 deadline,
+        bytes memory signature
+    ) external payable;
+
+    /**
+     * @notice Mints `quantity` of `tokens` and transfers them to the `caller`.
+     * NOTE: Only accepts a registered ERC20 `token` as a payment method.
+     * @param token ERC20 token to use as a payment method.
+     * @param quantity Amount of tokens to mint.
+     * @param deadline Expiration deadline for the signed message.
+     * @param signature Signed message to determine correctness.
+     */
+    function mint(
+        IERC20 token,
+        uint256 quantity,
+        uint256 deadline,
+        bytes memory signature
+    ) external;
+
+    /**
+     * @notice Updates the address of the `signature` {signer}.
+     * NOTE: Only `owner` can call this function.
+     * @param newSigner Address of the new data signer.
+     */
+    function updateSigner(address newSigner) external;
 
     /**
      * @notice Sets the value for `base URI`.
@@ -54,11 +106,6 @@ interface IBase is IERC721A {
     ) external;
 
     /**
-     * @notice Address of the fee wallet.
-     */
-    function FEE_WALLET() external view returns (address);
-
-    /**
      * @notice Time period until `tokens` are vested.
      */
     function VESTING_EXPIRY() external view returns (uint256);
@@ -67,6 +114,16 @@ interface IBase is IERC721A {
      * @notice Base cost for a single `token`.
      */
     function BASE_COST_SINGLE() external view returns (uint256);
+
+    /**
+     * @notice Address of the fee wallet.
+     */
+    function FEE_WALLET() external view returns (address);
+
+    /**
+     * @notice Address of the `signature` signer.
+     */
+    function signer() external view returns (address);
 
     /**
      * @notice `Base URI` for computing {tokenURI}. If set, the resulting URI

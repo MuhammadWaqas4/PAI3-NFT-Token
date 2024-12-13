@@ -20,6 +20,7 @@ contract Ethos is BaseV1 {
      * @dev Constructor. Assigns ownership and initializes variables.
      * @param owner_ Address of the contract owner.
      * @param feeWallet_ Address of the fee wallet.
+     * @param signer_ Address of the signatrue signer.
      * @param baseURI_ Base URI for computing the tokenURI.
      * @param tokens_ Addresses of the tokens to be registered as payment
      * tokens.
@@ -29,6 +30,7 @@ contract Ethos is BaseV1 {
     constructor(
         address owner_,
         address feeWallet_,
+        address signer_,
         string memory baseURI_,
         IERC20[] memory tokens_,
         AggregatorV3Interface[] memory priceFeeds_
@@ -37,8 +39,9 @@ contract Ethos is BaseV1 {
             owner_,
             "Ethos",
             "ETS",
-            feeWallet_,
             250,
+            feeWallet_,
+            signer_,
             baseURI_,
             tokens_,
             priceFeeds_,

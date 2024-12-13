@@ -19,62 +19,7 @@ interface IBaseV2 is IBase {
         SECOND
     }
 
-    /* ========== EVENTS ========== */
-
-    /**
-     * @dev Emitted when `quantity` of `tokens` is minted by `minter`.
-     */
-    event Mint(
-        address indexed minter,
-        IERC20 token,
-        uint256 fromTokenId,
-        uint256 quantity,
-        uint256 cost
-    );
-
-    /**
-     * @dev Emitted when {signer} is changed to `newSigner` from `oldSigner`.
-     */
-    event UpdateSigner(address indexed newSigner, address indexed oldSigner);
-
     /* ========== FUNCTIONS ========== */
-
-    /**
-     * @notice Mints `quantity` of `tokens` and transfers them to the `caller`.
-     * NOTE: `Payable value` must be given. Only accepts `ETH` as a payment
-     * method. Can only be called when `unpaused`.
-     * @param quantity Amount of tokens to mint.
-     * @param deadline Expiration deadline for the signed message.
-     * @param signature Signed message to determine correctness.
-     */
-    function mintWithETH(
-        uint256 quantity,
-        uint256 deadline,
-        bytes memory signature
-    ) external payable;
-
-    /**
-     * @notice Mints `quantity` of `tokens` and transfers them to the `caller`.
-     * NOTE: Only accepts a registered ERC20 `token` as a payment method. Can
-     * only be called when `unpaused`.
-     * @param token ERC20 token to use as a payment method.
-     * @param quantity Amount of tokens to mint.
-     * @param deadline Expiration deadline for the signed message.
-     * @param signature Signed message to determine correctness.
-     */
-    function mint(
-        IERC20 token,
-        uint256 quantity,
-        uint256 deadline,
-        bytes memory signature
-    ) external;
-
-    /**
-     * @notice Updates the address of the `signature` {signer}.
-     * NOTE: Only `owner` can call this function.
-     * @param newSigner Address of the new data signer.
-     */
-    function updateSigner(address newSigner) external;
 
     /**
      * @notice Bumps the `phase` after the first `phase` has ended and changes
@@ -102,11 +47,6 @@ interface IBaseV2 is IBase {
      * @notice Current phase.
      */
     function phase() external view returns (Phase);
-
-    /**
-     * @notice Address of the `signature` signer.
-     */
-    function signer() external view returns (address);
 
     /**
      * @notice Cap on the `token`'s {totalSupply}.

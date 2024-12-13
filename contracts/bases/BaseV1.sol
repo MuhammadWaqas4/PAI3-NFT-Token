@@ -40,8 +40,9 @@ abstract contract BaseV1 is BaseV1Errors, IBaseV1, Base {
      * @param owner_ Address of the contract owner.
      * @param name_ Token collection name.
      * @param symbol_ Token collection symbol.
-     * @param feeWallet_ Address of the fee wallet.
      * @param baseCostSingle_ Base cost for a single NFT.
+     * @param feeWallet_ Address of the fee wallet.
+     * @param signer_ Address of the signatrue signer.
      * @param baseURI_ Base URI for computing the tokenURI.
      * @param tokens_ Addresses of the tokens to be registered as payment
      * tokens.
@@ -53,8 +54,9 @@ abstract contract BaseV1 is BaseV1Errors, IBaseV1, Base {
         address owner_,
         string memory name_,
         string memory symbol_,
-        address feeWallet_,
         uint256 baseCostSingle_,
+        address feeWallet_,
+        address signer_,
         string memory baseURI_,
         IERC20[] memory tokens_,
         AggregatorV3Interface[] memory priceFeeds_,
@@ -64,8 +66,9 @@ abstract contract BaseV1 is BaseV1Errors, IBaseV1, Base {
             owner_,
             name_,
             symbol_,
-            feeWallet_,
             baseCostSingle_,
+            feeWallet_,
+            signer_,
             baseURI_,
             tokens_,
             priceFeeds_
@@ -79,43 +82,6 @@ abstract contract BaseV1 is BaseV1Errors, IBaseV1, Base {
     }
 
     /* ========== FUNCTIONS ========== */
-
-    /**
-     * @inheritdoc IBaseV1
-     */
-    function mintWithETH(uint256 quantity) external payable {
-        if (msg.value == 0) {
-            _revert(InvalidPayableValue.selector);
-        }
-
-        IERC20 token = _ETH;
-        uint8 tokenDecimals = 18;
-        uint256 cost = _processMint(token, tokenDecimals, quantity);
-
-        payable(FEE_WALLET).sendValue(cost);
-
-        if (msg.value > cost) {
-            payable(msg.sender).sendValue(msg.value - cost);
-        }
-
-        _safeMint(msg.sender, quantity);
-    }
-
-    /**
-     * @inheritdoc IBaseV1
-     */
-    function mint(IERC20 token, uint256 quantity) external {
-        if (address(token) == address(0)) {
-            _revert(InvalidAddress.selector);
-        }
-
-        uint8 tokenDecimals = IERC20Metadata(address(token)).decimals();
-        uint256 cost = _processMint(token, tokenDecimals, quantity);
-
-        token.safeTransferFrom(msg.sender, FEE_WALLET, cost);
-
-        _safeMint(msg.sender, quantity);
-    }
 
     /**
      * @inheritdoc IBaseV1

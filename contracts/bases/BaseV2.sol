@@ -6,8 +6,6 @@ import { AggregatorV3Interface } from "@chainlink/contracts/src/v0.8/shared/inte
 
 import { IERC20Metadata } from "@openzeppelin/contracts/token/ERC20/extensions/IERC20Metadata.sol";
 import { SafeERC20, IERC20, Address } from "@openzeppelin/contracts/token/ERC20/utils/SafeERC20.sol";
-import { ECDSA } from "@openzeppelin/contracts/utils/cryptography/ECDSA.sol";
-import { MessageHashUtils } from "@openzeppelin/contracts/utils/cryptography/MessageHashUtils.sol";
 import { Pausable } from "@openzeppelin/contracts/utils/Pausable.sol";
 
 import { ERC721A, IERC721A } from "erc721a/contracts/ERC721A.sol";
@@ -27,8 +25,6 @@ import { _ETH } from "../Globals.sol";
 abstract contract BaseV2 is Pausable, BaseV2Errors, IBaseV2, Base {
     using SafeERC20 for IERC20;
     using Address for address payable;
-    using ECDSA for bytes32;
-    using MessageHashUtils for bytes32;
 
     /* ========== STATE VARIABLES ========== */
 
@@ -47,9 +43,6 @@ abstract contract BaseV2 is Pausable, BaseV2Errors, IBaseV2, Base {
     /// @inheritdoc IBaseV2
     Phase public phase;
 
-    /// @inheritdoc IBaseV2
-    address public signer;
-
     /* ========== CONSTRUCTOR ========== */
 
     /**
@@ -57,8 +50,9 @@ abstract contract BaseV2 is Pausable, BaseV2Errors, IBaseV2, Base {
      * @param owner_ Address of the contract owner.
      * @param name_ Token collection name.
      * @param symbol_ Token collection symbol.
-     * @param feeWallet_ Address of the fee wallet.
      * @param baseCostSingle_ Base cost for a single NFT.
+     * @param feeWallet_ Address of the fee wallet.
+     * @param signer_ Address of the signatrue signer.
      * @param baseURI_ Base URI for computing the tokenURI.
      * @param tokens_ Addresses of the tokens to be registered as payment
      * tokens.
@@ -66,27 +60,27 @@ abstract contract BaseV2 is Pausable, BaseV2Errors, IBaseV2, Base {
      * payment token.
      * @param initialCap_ Cap on the number of initially minted tokens.
      * @param cap_ Cap on the number of minted tokens.
-     * @param signer_ Address of the signatrue signer.
      */
     constructor(
         address owner_,
         string memory name_,
         string memory symbol_,
-        address feeWallet_,
         uint256 baseCostSingle_,
+        address feeWallet_,
+        address signer_,
         string memory baseURI_,
         IERC20[] memory tokens_,
         AggregatorV3Interface[] memory priceFeeds_,
         uint256 initialCap_,
-        uint256 cap_,
-        address signer_
+        uint256 cap_
     )
         Base(
             owner_,
             name_,
             symbol_,
-            feeWallet_,
             baseCostSingle_,
+            feeWallet_,
+            signer_,
             baseURI_,
             tokens_,
             priceFeeds_
@@ -98,80 +92,9 @@ abstract contract BaseV2 is Pausable, BaseV2Errors, IBaseV2, Base {
 
         _INITIAL_CAP = initialCap_;
         _CAP = cap_;
-
-        _updateSigner(signer_);
     }
 
     /* ========== FUNCTIONS ========== */
-
-    /**
-     * @inheritdoc IBaseV2
-     */
-    function mintWithETH(
-        uint256 quantity,
-        uint256 deadline,
-        bytes memory signature
-    ) external payable {
-        if (block.timestamp > deadline) {
-            _revert(AfterSignatureDeadline.selector);
-        }
-
-        if (msg.value == 0) {
-            _revert(InvalidPayableValue.selector);
-        }
-
-        IERC20 token = _ETH;
-        uint8 tokenDecimals = 18;
-        uint256 cost = _processMint(
-            token,
-            tokenDecimals,
-            quantity,
-            deadline,
-            signature
-        );
-
-        payable(FEE_WALLET).sendValue(cost);
-
-        if (msg.value > cost) {
-            payable(msg.sender).sendValue(msg.value - cost);
-        }
-
-        _safeMint(msg.sender, quantity);
-    }
-
-    /**
-     * @inheritdoc IBaseV2
-     */
-    function mint(
-        IERC20 token,
-        uint256 quantity,
-        uint256 deadline,
-        bytes memory signature
-    ) external {
-        if (address(token) == address(0)) {
-            _revert(InvalidAddress.selector);
-        }
-
-        uint8 tokenDecimals = IERC20Metadata(address(token)).decimals();
-        uint256 cost = _processMint(
-            token,
-            tokenDecimals,
-            quantity,
-            deadline,
-            signature
-        );
-
-        token.safeTransferFrom(msg.sender, FEE_WALLET, cost);
-
-        _safeMint(msg.sender, quantity);
-    }
-
-    /**
-     * @inheritdoc IBaseV2
-     */
-    function updateSigner(address newSigner) external onlyOwner {
-        _updateSigner(newSigner);
-    }
 
     /**
      * @inheritdoc IBaseV2
@@ -239,7 +162,9 @@ abstract contract BaseV2 is Pausable, BaseV2Errors, IBaseV2, Base {
     }
 
     /**
-     * @dev Implements {mint} logic.
+     * @inheritdoc Base
+     * @dev Overridden to add pausing checks.
+     * NOTE: Can only be called when `unpaused`.
      */
     function _processMint(
         IERC20 token,
@@ -247,62 +172,14 @@ abstract contract BaseV2 is Pausable, BaseV2Errors, IBaseV2, Base {
         uint256 quantity,
         uint256 deadline,
         bytes memory signature
-    ) private whenNotPaused returns (uint256) {
-        if (quantity == 0) {
-            _revert(InvalidValue.selector);
-        }
-
-        uint256 baseCost = quantity * BASE_COST_SINGLE;
-
-        AggregatorV3Interface priceFeed = priceFeeds[token];
-
-        if (address(priceFeed) == address(0)) {
-            _revert(IncorrectPaymentToken.selector);
-        }
-
-        uint256 fromTokenId = _nextTokenId();
-
-        bytes32 hash = keccak256(
-            abi.encodePacked(msg.sender, fromTokenId, deadline)
-        ).toEthSignedMessageHash();
-
-        if (signer != hash.recover(signature)) {
-            _revert(IncorrectSignatureRecovery.selector);
-        }
-
-        (, int256 price, , , ) = priceFeed.latestRoundData();
-        uint256 normalization = priceFeed.decimals() + tokenDecimals;
-        uint256 cost = (baseCost * 10 ** normalization) / uint256(price);
-
-        if (cost < BASE_COST_SINGLE) {
-            _revert(InsufficientCost.selector);
-        }
-
-        emit Mint({
-            minter: msg.sender,
-            token: token,
-            fromTokenId: fromTokenId,
-            quantity: quantity,
-            cost: cost
-        });
-
-        return cost;
-    }
-
-    /**
-     * @dev Implements {updateSigner} logic.
-     */
-    function _updateSigner(address newSigner) private {
-        if (newSigner == address(0)) {
-            _revert(InvalidAddress.selector);
-        }
-
-        if (newSigner == signer) {
-            _revert(InvalidAssignment.selector);
-        }
-
-        emit UpdateSigner({ newSigner: newSigner, oldSigner: signer });
-
-        signer = newSigner;
+    ) internal override whenNotPaused returns (uint256) {
+        return
+            super._processMint(
+                token,
+                tokenDecimals,
+                quantity,
+                deadline,
+                signature
+            );
     }
 }
