@@ -14,8 +14,6 @@ import { IBaseV1 } from "../interfaces/IBaseV1.sol";
 
 import { Base } from "./Base.sol";
 
-import { _ETH } from "../Globals.sol";
-
 /**
  * @title BaseV1.
  * @author PAI3 Team.
@@ -36,26 +34,31 @@ abstract contract BaseV1 is BaseV1Errors, IBaseV1, Base {
     /* ========== CONSTRUCTOR ========== */
 
     /**
-     * @dev Constructor. Assigns ownership and initializes variables.
+     * @dev Constructor. Initializes parent contract.
      * @param owner_ Address of the contract owner.
      * @param name_ Token collection name.
      * @param symbol_ Token collection symbol.
-     * @param baseCostSingle_ Base cost for a single NFT.
+     * @param rewardDuration_ Reward duration in seconds.
+     * @param rewardPerSecond_ Reward generated per second.
+     * @param baseCostSingle_ Base cost for a single token.
+     * @param pai3_ Address of the PAI3 token.
      * @param feeWallet_ Address of the fee wallet.
+     * @param rewardWallet_ Address of the reward wallet.
      * @param signer_ Address of the signatrue signer.
      * @param baseURI_ Base URI for computing the tokenURI.
-     * @param tokens_ Addresses of the tokens to be registered as payment
-     * tokens.
-     * @param priceFeeds_ Addresses of the price feed relevant to a registered
-     * payment token.
-     * @param cap_ Cap on the number of minted tokens.
+     * @param tokens_ Addresses of the tokens to register as payment tokens.
+     * @param priceFeeds_ Addresses of the price feeds.
      */
     constructor(
         address owner_,
         string memory name_,
         string memory symbol_,
+        uint64 rewardDuration_,
+        uint256 rewardPerSecond_,
         uint256 baseCostSingle_,
+        IERC20 pai3_,
         address feeWallet_,
+        address rewardWallet_,
         address signer_,
         string memory baseURI_,
         IERC20[] memory tokens_,
@@ -66,8 +69,12 @@ abstract contract BaseV1 is BaseV1Errors, IBaseV1, Base {
             owner_,
             name_,
             symbol_,
+            rewardDuration_,
+            rewardPerSecond_,
             baseCostSingle_,
+            pai3_,
             feeWallet_,
+            rewardWallet_,
             signer_,
             baseURI_,
             tokens_,
@@ -116,44 +123,5 @@ abstract contract BaseV1 is BaseV1Errors, IBaseV1, Base {
         if (supply > maxSupply) {
             _revert(ExceededCap.selector);
         }
-    }
-
-    /**
-     * @dev Implements {mint} logic.
-     */
-    function _processMint(
-        IERC20 token,
-        uint8 tokenDecimals,
-        uint256 quantity
-    ) private returns (uint256) {
-        if (quantity == 0) {
-            _revert(InvalidValue.selector);
-        }
-
-        uint256 baseCost = quantity * BASE_COST_SINGLE;
-
-        AggregatorV3Interface priceFeed = priceFeeds[token];
-
-        if (address(priceFeed) == address(0)) {
-            _revert(IncorrectPaymentToken.selector);
-        }
-
-        (, int256 price, , , ) = priceFeed.latestRoundData();
-        uint256 normalization = priceFeed.decimals() + tokenDecimals;
-        uint256 cost = (baseCost * 10 ** normalization) / uint256(price);
-
-        if (cost == 0) {
-            _revert(InsufficientCost.selector);
-        }
-
-        emit Mint({
-            minter: msg.sender,
-            token: token,
-            fromTokenId: _nextTokenId(),
-            quantity: quantity,
-            cost: cost
-        });
-
-        return cost;
     }
 }

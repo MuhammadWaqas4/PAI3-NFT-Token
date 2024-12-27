@@ -11,7 +11,9 @@ async function main() {
 
     // Deployment variables.
     const ownerAddress = process.env.OWNER_ADDRESS;
+    const pai3Address = process.env.PAI3_ADDRESS;
     const feeWalletAddress = process.env.FEE_WALLET_ADDRESS;
+    const rewardWalletAddress = process.env.REWARD_WALLET_ADDRESS;
     const signerAddress = process.env.SIGNER_ADDRESS;
     const baseURIs = process.env.BASE_URIS.split(" ");
     const tokenAddresses = process.env.TOKEN_ADDRESSES.split(" ");
@@ -20,7 +22,9 @@ async function main() {
     // Common deployment variables.
     const baseConstructorArguments = {
         owner: ownerAddress,
+        pai3: pai3Address,
         feeWallet: feeWalletAddress,
+        rewardWallet: rewardWalletAddress,
         signer: signerAddress,
         baseURI: "",
         token: tokenAddresses,
@@ -47,16 +51,26 @@ async function main() {
         return value;
     });
 
-    // Deploying contracts.
+    // Deploying collections.
     const collectionAddresses = [];
     for (let i = 0; i < collectionContractNames.length; i++) {
         collectionAddresses.push(await deploy(collectionContractNames[i], collectionConstructorArguments[i]));
     }
 
+    // Setting up collections.
+    if (networkName === "staging") {
+        const pai3Instance = await hre.ethers.getContractAt("PAI3", pai3Address);
+
+        for (let i = 0; i < collectionAddresses.length; i++) {
+            const transaction = await pai3Instance.approve(collectionAddresses[i], BigInt(2 ** 256) - 1n);
+            await transaction.wait(1);
+        }
+    }
+
     // Waiting for block explorer.
     await new Promise((resolve) => setTimeout(resolve, 60000));
 
-    // Verifying contracts.
+    // Verifying collections.
     for (let i = 0; i < collectionAddresses.length; i++) {
         await verify(collectionAddresses[i], collectionConstructorArguments[i]);
     }

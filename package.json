@@ -5,8 +5,10 @@
     "scripts": {
         "compile": "hardhat compile",
         "compile-force": "hardhat compile --force",
-        "deploy": "hardhat run scripts/deploy.js",
-        "deploy-staging": "hardhat run scripts/deploy.js --network staging",
+        "deploy-collections": "hardhat run scripts/deploy-collections.js",
+        "deploy-collections-staging": "hardhat run scripts/deploy-collections.js --network staging",
+        "deploy-token": "hardhat run scripts/deploy-token.js",
+        "deploy-token-staging": "hardhat run scripts/deploy-token.js --network staging",
         "format": "prettier --check --write .prettierrc *.json contracts/**/*.sol {,scripts/,test/}*.js",
         "test": "hardhat test --network hardhat",
         "test-force": "hardhat compile --force && hardhat test --network hardhat"
@@ -22,6 +24,7 @@
         "@nomicfoundation/hardhat-toolbox": "^5.0.0",
         "@openzeppelin/contracts": "^5.0.2",
         "dotenv": "^16.4.5",
+        "envfile": "^7.1.0",
         "erc721a": "^4.3.0",
         "hardhat": "^2.22.9",
         "prettier": "^3.3.3",

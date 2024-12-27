@@ -13,6 +13,12 @@ interface BaseErrors {
     error AfterSignatureDeadline();
 
     /**
+     * @dev Indicates a failure with the `caller` if the `caller` is not the
+     * `owner` of a `tokenId`.
+     */
+    error CallerNotOwner();
+
+    /**
      * @dev Indicates a failure with the `token` if the `token` is not
      * registered as a payment token with a cooresponding `price feed`.
      */
@@ -25,10 +31,15 @@ interface BaseErrors {
     error IncorrectSignatureRecovery();
 
     /**
-     * @dev Indicates a failure with the `cost` calculated if the `cost` is
+     * @dev Indicates a failure with the `cost` if the `cost` calculated is
      * below the `base cost single`.
      */
     error InsufficientCost();
+
+    /**
+     * @dev Indicates a failure with the `reward` if the `reward` is `0`.
+     */
+    error InsufficientReward();
 
     /**
      * @dev Indicates an error with the given argument `address`. For example,
@@ -128,69 +139,16 @@ interface BaseV2Errors {
      * exceeds the `cap`.
      */
     error ExceededCap();
+
+    /**
+     * @dev Indicates an error in the given argument `cap`. That is,
+     * `cap > type(uint24).max`.
+     */
+    error InvalidCap();
+
+    /**
+     * @dev Indicates an error in the given argument `initial cap`. That is,
+     * `initialCap_ >= cap_`.
+     */
+    error InvalidInitialCap();
 }
-
-/**
- * @dev Errors for the Marketplace contract.
- */
-interface MarketplaceErrors {
-    /**
-     * @dev Indicates a failure with the `tokenId` if the `tokenId` is already
-     * on `sale` for the corresponding `collection`.
-     */
-    error AlreadyOnSale();
-
-    /**
-     * @dev Indicates a failure with the `token` if the `token` is not
-     * registered as a payment token with a cooresponding `price feed`.
-     */
-    error IncorrectPaymentToken();
-
-    // error IncorrectBidder();
-    // error IncorrectCollection();
-    // error IncorrectSale();
-    // error IncorrectTokenIdOwner();
-    // error InsufficientBid();
-    // error InsufficientTokenApproval();
-    // error InsufficientTokenIdApproval();
-    // error InsufficientTokenBalance();
-
-    /**
-     * @dev Indicates an error with the given argument `address`. For example,
-     * `address(0)`.
-     */
-    error InvalidAddress();
-
-    /**
-     * @dev Indicates an error with the given argument array's arity. For
-     * example, `firstArray.length() != secondArray.length()`.
-     */
-    error InvalidArrayArity();
-
-    /**
-     * @dev Indicates an error with the given argument array's length. For
-     * example, `array.length() == 0`.
-     */
-    error InvalidArrayLength();
-
-    /**
-     * @dev Indicates an error with the given argument's assignment. For
-     * example, `argument == stateVariable`.
-     */
-    error InvalidAssignment();
-
-    /**
-     * @dev Indicates an error with the given argument `payable value`. For
-     * example, `0`.
-     */
-    error InvalidPayableValue();
-
-    /**
-     * @dev Indicates an error with the given argument `value`. For example,
-     * `0`.
-     */
-    error InvalidValue();
-}
-
-// TODO multicall or maybe dont use it since he can wrap more eth if he needs to
-// error PreExistingWrappedBalance();

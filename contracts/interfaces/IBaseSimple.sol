@@ -4,8 +4,6 @@ pragma solidity 0.8.28;
 
 import { IERC721 } from "@openzeppelin/contracts/token/ERC721/IERC721.sol";
 
-import { IPAI3 } from "./IPAI3.sol";
-
 /**
  * @title IBaseSimple.
  * @author PAI3 Team.

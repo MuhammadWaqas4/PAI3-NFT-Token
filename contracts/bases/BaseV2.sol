@@ -15,8 +15,6 @@ import { IBaseV2 } from "../interfaces/IBaseV2.sol";
 
 import { Base } from "./Base.sol";
 
-import { _ETH } from "../Globals.sol";
-
 /**
  * @title BaseV2.
  * @author PAI3 Team.
@@ -46,18 +44,20 @@ abstract contract BaseV2 is Pausable, BaseV2Errors, IBaseV2, Base {
     /* ========== CONSTRUCTOR ========== */
 
     /**
-     * @dev Constructor. Assigns ownership and initializes variables.
+     * @dev Constructor. Initializes parent contract.
      * @param owner_ Address of the contract owner.
      * @param name_ Token collection name.
      * @param symbol_ Token collection symbol.
-     * @param baseCostSingle_ Base cost for a single NFT.
+     * @param rewardDuration_ Reward duration in seconds.
+     * @param rewardPerSecond_ Reward generated per second.
+     * @param baseCostSingle_ Base cost for a single token.
+     * @param pai3_ Address of the PAI3 token.
      * @param feeWallet_ Address of the fee wallet.
+     * @param rewardWallet_ Address of the reward wallet.
      * @param signer_ Address of the signatrue signer.
      * @param baseURI_ Base URI for computing the tokenURI.
-     * @param tokens_ Addresses of the tokens to be registered as payment
-     * tokens.
-     * @param priceFeeds_ Addresses of the price feed relevant to a registered
-     * payment token.
+     * @param tokens_ Addresses of the tokens to register as payment tokens.
+     * @param priceFeeds_ Addresses of the price feeds.
      * @param initialCap_ Cap on the number of initially minted tokens.
      * @param cap_ Cap on the number of minted tokens.
      */
@@ -65,8 +65,12 @@ abstract contract BaseV2 is Pausable, BaseV2Errors, IBaseV2, Base {
         address owner_,
         string memory name_,
         string memory symbol_,
+        uint64 rewardDuration_,
+        uint256 rewardPerSecond_,
         uint256 baseCostSingle_,
+        IERC20 pai3_,
         address feeWallet_,
+        address rewardWallet_,
         address signer_,
         string memory baseURI_,
         IERC20[] memory tokens_,
@@ -78,16 +82,28 @@ abstract contract BaseV2 is Pausable, BaseV2Errors, IBaseV2, Base {
             owner_,
             name_,
             symbol_,
+            rewardDuration_,
+            rewardPerSecond_,
             baseCostSingle_,
+            pai3_,
             feeWallet_,
+            rewardWallet_,
             signer_,
             baseURI_,
             tokens_,
             priceFeeds_
         )
     {
-        if (cap_ == 0 || initialCap_ == 0) {
+        if (initialCap_ == 0 || cap_ == 0) {
             _revert(InvalidValue.selector);
+        }
+
+        if (initialCap_ >= cap_) {
+            _revert(InvalidInitialCap.selector);
+        }
+
+        if (cap_ > type(uint24).max) {
+            _revert(InvalidCap.selector);
         }
 
         _INITIAL_CAP = initialCap_;

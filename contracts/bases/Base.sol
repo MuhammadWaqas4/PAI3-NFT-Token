@@ -32,17 +32,26 @@ abstract contract Base is Ownable2Step, ERC721A, BaseErrors, IBase {
 
     /* ========== STATE VARIABLES ========== */
 
-    /// @dev One year time in seconds.
-    uint256 private constant _ONE_YEAR_TIME = 31_536_000 seconds;
+    /// @inheritdoc IBase
+    uint64 public constant VESTING_DURATION = 31_536_000 seconds;
 
     /// @inheritdoc IBase
-    uint256 public immutable VESTING_EXPIRY;
+    uint64 public immutable REWARD_DURATION;
+
+    /// @inheritdoc IBase
+    uint256 public immutable REWARD_PER_SECOND;
 
     /// @inheritdoc IBase
     uint256 public immutable BASE_COST_SINGLE;
 
     /// @inheritdoc IBase
+    IERC20 public immutable PAI3;
+
+    /// @inheritdoc IBase
     address public immutable FEE_WALLET;
+
+    /// @inheritdoc IBase
+    address public immutable REWARD_WALLET;
 
     /// @inheritdoc IBase
     address public signer;
@@ -50,8 +59,14 @@ abstract contract Base is Ownable2Step, ERC721A, BaseErrors, IBase {
     /// @inheritdoc IBase
     string public baseURI;
 
+    /// @dev Time based `records` relevant to a packed index.
+    mapping(uint24 index => Record record) private _records;
+
     /// @inheritdoc IBase
     mapping(IERC20 token => AggregatorV3Interface priceFeed) public priceFeeds;
+
+    /// @inheritdoc IBase
+    mapping(address account => uint256 due) public dues;
 
     /* ========== CONSTRUCTOR ========== */
 
@@ -60,32 +75,42 @@ abstract contract Base is Ownable2Step, ERC721A, BaseErrors, IBase {
      * @param owner_ Address of the contract owner.
      * @param name_ Token collection name.
      * @param symbol_ Token collection symbol.
-     * @param baseCostSingle_ Base cost for a single NFT.
+     * @param rewardDuration_ Reward duration in seconds.
+     * @param rewardPerSecond_ Reward generated per second.
+     * @param baseCostSingle_ Base cost for a single token.
+     * @param pai3_ Address of the PAI3 token.
      * @param feeWallet_ Address of the fee wallet.
+     * @param rewardWallet_ Address of the reward wallet.
      * @param signer_ Address of the signatrue signer.
      * @param baseURI_ Base URI for computing the tokenURI.
-     * @param tokens_ Addresses of the tokens to be registered as payment
-     * tokens.
-     * @param priceFeeds_ Addresses of the price feed relevant to a registered
-     * payment token.
+     * @param tokens_ Addresses of the tokens to register as payment tokens.
+     * @param priceFeeds_ Addresses of the price feeds.
      */
     constructor(
         address owner_,
         string memory name_,
         string memory symbol_,
+        uint64 rewardDuration_,
+        uint256 rewardPerSecond_,
         uint256 baseCostSingle_,
+        IERC20 pai3_,
         address feeWallet_,
+        address rewardWallet_,
         address signer_,
         string memory baseURI_,
         IERC20[] memory tokens_,
         AggregatorV3Interface[] memory priceFeeds_
     ) Ownable(owner_) ERC721A(name_, symbol_) {
-        if (feeWallet_ == address(0)) {
-            _revert(InvalidAddress.selector);
+        if (
+            rewardDuration_ == 0 ||
+            rewardPerSecond_ == 0 ||
+            baseCostSingle_ == 0
+        ) {
+            _revert(InvalidValue.selector);
         }
 
-        if (baseCostSingle_ == 0) {
-            _revert(InvalidValue.selector);
+        if (feeWallet_ == address(0) || rewardWallet_ == address(0)) {
+            _revert(InvalidAddress.selector);
         }
 
         uint256 length = tokens_.length;
@@ -98,9 +123,14 @@ abstract contract Base is Ownable2Step, ERC721A, BaseErrors, IBase {
             _revert(InvalidArrayArity.selector);
         }
 
-        FEE_WALLET = feeWallet_;
-        VESTING_EXPIRY = block.timestamp + _ONE_YEAR_TIME;
+        REWARD_DURATION = rewardDuration_;
+
+        REWARD_PER_SECOND = rewardPerSecond_;
         BASE_COST_SINGLE = baseCostSingle_;
+
+        PAI3 = pai3_;
+        FEE_WALLET = feeWallet_;
+        REWARD_WALLET = rewardWallet_;
 
         _updateSigner(signer_);
         _setBaseURI(baseURI_);
@@ -177,6 +207,63 @@ abstract contract Base is Ownable2Step, ERC721A, BaseErrors, IBase {
     /**
      * @inheritdoc IBase
      */
+    function claim(uint256 tokenId) external {
+        if (ownerOf(tokenId) != msg.sender) {
+            _revert(CallerNotOwner.selector);
+        }
+
+        uint256 due = dues[msg.sender];
+        delete dues[msg.sender];
+
+        Record memory record = _tokenRecords(tokenId);
+
+        uint256 reward;
+
+        if (record.lastInteractedTimestamp < record.rewardingEndTimestamp) {
+            uint24 index = uint24(tokenId);
+            Record storage currentRecord = _records[index];
+
+            uint64 lastInteractedTimestamp = currentRecord
+                .lastInteractedTimestamp;
+
+            if (lastInteractedTimestamp == 0) {
+                _initializeOwnershipAt(tokenId);
+                _setExtraDataAt(tokenId, index);
+                _records[index] = record;
+                lastInteractedTimestamp = record.startTimestamp;
+            }
+
+            uint64 currentTime = uint64(
+                block.timestamp < record.rewardingEndTimestamp
+                    ? block.timestamp
+                    : record.rewardingEndTimestamp
+            );
+            currentRecord.lastInteractedTimestamp = currentTime;
+
+            reward =
+                (currentTime - lastInteractedTimestamp) *
+                REWARD_PER_SECOND;
+        }
+
+        uint256 totalReward = reward + due;
+
+        if (totalReward == 0) {
+            _revert(InsufficientReward.selector);
+        }
+
+        PAI3.safeTransferFrom(REWARD_WALLET, msg.sender, totalReward);
+
+        emit Claim({
+            claimer: msg.sender,
+            tokenId: tokenId,
+            reward: reward,
+            due: due
+        });
+    }
+
+    /**
+     * @inheritdoc IBase
+     */
     function updateSigner(address newSigner) external onlyOwner {
         _updateSigner(newSigner);
     }
@@ -199,30 +286,66 @@ abstract contract Base is Ownable2Step, ERC721A, BaseErrors, IBase {
     }
 
     /**
+     * @inheritdoc IBase
+     */
+    function tokenRecords(
+        uint256 tokenId
+    ) external view returns (Record memory) {
+        return _tokenRecords(tokenId);
+    }
+
+    /**
      * @inheritdoc ERC721A
-     * @dev Overridden to add vesting check.
+     * @dev Overridden to add vesting checks and reward generation
+     * prerequisites.
      */
     function transferFrom(
         address from,
         address to,
         uint256 tokenId
     ) public payable override(ERC721A, IERC721A) {
-        if (block.timestamp < VESTING_EXPIRY) {
-            address sender = msg.sender;
-            uint32 senderSize;
+        Record memory record = _tokenRecords(tokenId);
+
+        if (block.timestamp < record.vestingEndTimestamp) {
+            uint32 callerSize;
             uint32 toSize;
 
             assembly {
-                senderSize := extcodesize(sender)
+                callerSize := extcodesize(caller())
                 toSize := extcodesize(to)
             }
 
-            if (senderSize > 0 || toSize > 0) {
+            if (callerSize > 0 || toSize > 0) {
                 _revert(BeforeVestingExpiry.selector);
             }
         }
 
         super.transferFrom(from, to, tokenId);
+
+        if (record.lastInteractedTimestamp < record.rewardingEndTimestamp) {
+            uint24 index = uint24(tokenId);
+            Record storage currentRecord = _records[index];
+
+            uint64 lastInteractedTimestamp = currentRecord
+                .lastInteractedTimestamp;
+
+            if (lastInteractedTimestamp == 0) {
+                _setExtraDataAt(tokenId, index);
+                _records[index] = record;
+                lastInteractedTimestamp = record.startTimestamp;
+            }
+
+            uint64 currentTime = uint64(
+                block.timestamp < record.rewardingEndTimestamp
+                    ? block.timestamp
+                    : record.rewardingEndTimestamp
+            );
+            currentRecord.lastInteractedTimestamp = currentTime;
+
+            dues[from] +=
+                (currentTime - lastInteractedTimestamp) *
+                REWARD_PER_SECOND;
+        }
     }
 
     /**
@@ -248,30 +371,25 @@ abstract contract Base is Ownable2Step, ERC721A, BaseErrors, IBase {
         uint256 deadline,
         bytes memory signature
     ) internal virtual returns (uint256) {
-        if (quantity == 0) {
-            _revert(InvalidValue.selector);
-        }
-
-        uint256 baseCost = quantity * BASE_COST_SINGLE;
-
         AggregatorV3Interface priceFeed = priceFeeds[token];
 
         if (address(priceFeed) == address(0)) {
             _revert(IncorrectPaymentToken.selector);
         }
 
-        uint256 fromTokenId = _nextTokenId();
+        uint256 startTokenId = _nextTokenId();
 
         bytes32 hash = keccak256(
-            abi.encodePacked(msg.sender, fromTokenId, deadline)
+            abi.encodePacked(msg.sender, startTokenId, deadline)
         ).toEthSignedMessageHash();
 
         if (signer != hash.recover(signature)) {
             _revert(IncorrectSignatureRecovery.selector);
         }
 
-        (, int256 price, , , ) = priceFeed.latestRoundData();
+        uint256 baseCost = quantity * BASE_COST_SINGLE;
         uint256 normalization = priceFeed.decimals() + tokenDecimals;
+        (, int256 price, , , ) = priceFeed.latestRoundData();
         uint256 cost = (baseCost * 10 ** normalization) / uint256(price);
 
         if (cost < BASE_COST_SINGLE) {
@@ -281,7 +399,7 @@ abstract contract Base is Ownable2Step, ERC721A, BaseErrors, IBase {
         emit Mint({
             minter: msg.sender,
             token: token,
-            fromTokenId: fromTokenId,
+            startTokenId: startTokenId,
             quantity: quantity,
             cost: cost
         });
@@ -291,10 +409,49 @@ abstract contract Base is Ownable2Step, ERC721A, BaseErrors, IBase {
 
     /**
      * @inheritdoc ERC721A
+     * @dev Overridden to add `extraData` and populate {_records}.
+     */
+    function _mint(address to, uint256 quantity) internal virtual override {
+        uint256 startTokenId = _startTokenId();
+
+        super._mint(to, quantity);
+
+        uint24 startIndex = uint24(startTokenId);
+        uint64 currentTimestamp = uint64(block.timestamp);
+
+        _records[startIndex] = Record({
+            startTimestamp: currentTimestamp,
+            vestingEndTimestamp: currentTimestamp + VESTING_DURATION,
+            rewardingEndTimestamp: currentTimestamp + REWARD_DURATION,
+            lastInteractedTimestamp: currentTimestamp
+        });
+
+        _setExtraDataAt(startTokenId, startIndex);
+    }
+
+    /**
+     * @inheritdoc ERC721A
      * @dev Overridden to return {baseURI}.
      */
     function _baseURI() internal view override returns (string memory) {
         return baseURI;
+    }
+
+    /**
+     * @inheritdoc ERC721A
+     * @dev Overridden to create empty `extraData` when minting or burning and
+     * to continue `previousExtraData` when transferring.
+     */
+    function _extraData(
+        address from,
+        address to,
+        uint24 previousExtraData
+    ) internal pure override returns (uint24) {
+        if (from == address(0) || to == address(0)) {
+            return 0;
+        } else {
+            return previousExtraData;
+        }
     }
 
     /**
@@ -363,5 +520,14 @@ abstract contract Base is Ownable2Step, ERC721A, BaseErrors, IBase {
             newPriceFeed: newPriceFeed,
             oldPriceFeed: priceFeed
         });
+    }
+
+    /**
+     * @dev Implements {tokenRecords} logic.
+     */
+    function _tokenRecords(
+        uint256 tokenId
+    ) private view returns (Record memory) {
+        return _records[_ownershipOf(tokenId).extraData];
     }
 }
