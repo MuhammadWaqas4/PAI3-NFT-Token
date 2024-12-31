@@ -6,57 +6,97 @@ describe("Dynamis", function () {
         // Getting signer.
         const signer = (await hre.ethers.getSigners())[0];
 
-        // Deployment variables.
+        // Token deployment variables.
         const ownerAddress = process.env.OWNER_ADDRESS;
+        const rewardWalletAddress = process.env.REWARD_WALLET_ADDRESS;
+        const totalSupply = process.env.TOTAL_SUPPLY;
+
+        // Structuring token deployment variables.
+        const pai3ConstructorArguments = [ownerAddress, rewardWalletAddress, totalSupply];
+
+        // Deploying token.
+        const pai3Contract = await hre.ethers.deployContract("PAI3", pai3ConstructorArguments);
+        const pai3 = await pai3Contract.waitForDeployment();
+
+        // Collection deployment variables.
+        const pai3Address = pai3.getAddress();
         const feeWalletAddress = process.env.FEE_WALLET_ADDRESS;
-        const baseURIs = process.env.BASE_URIS.split(" ");
         const signerAddress = signer.address;
+        const baseURIs = process.env.BASE_URIS.split(" ");
         const tokenAddresses = process.env.TOKEN_ADDRESSES.split(" ");
         const priceFeedAddresses = process.env.PRICE_FEED_ADDRESSES.split(" ");
 
-        // Structuring deployment variables.
+        // Structuring collection deployment variables.
         const dynamisConstructorArguments = [
             ownerAddress,
+            pai3Address,
             feeWalletAddress,
-            baseURIs[0],
+            rewardWalletAddress,
             signerAddress,
+            baseURIs[0],
             tokenAddresses,
             priceFeedAddresses
         ];
 
-        // Deploying contract.
+        // Deploying collection.
         const dynamisContract = await hre.ethers.deployContract("Dynamis", dynamisConstructorArguments);
         const dynamis = await dynamisContract.waitForDeployment();
 
         // Return variables.
-        return { signer, dynamis };
+        return { signer, pai3, dynamis };
     }
 
-    describe("mintWithETH", function () {
-        it("should mint", async function () {
-            const { signer, dynamis } = await loadFixture(deploy);
+    it("should mint single with ETH", async function () {
+        const { signer, dynamis } = await loadFixture(deploy);
 
-            // Getting transaction variables.
-            const caller = signer.address;
-            const quantity = 1;
-            const deadline = 2000000000;
-            const value = hre.ethers.parseEther("10");
+        // Getting transaction and signature variables.
+        const caller = signer.address;
+        const startTokenId = (await dynamis.totalSupply()) + 1n;
+        const quantity = 3;
+        const deadline = parseInt(Date.now() / 1000);
+        const value = hre.ethers.parseEther("1");
 
-            // Message data.
-            const messageDataTypes = ["address", "uint256", "uint256"];
-            const messageData = [caller, quantity, deadline];
+        // Message data.
+        const messageDataTypes = ["address", "uint256", "uint256"];
+        const messageData = [caller, startTokenId, deadline];
 
-            // Creating message hash.
-            const messageHash = hre.ethers.solidityPackedKeccak256(messageDataTypes, messageData);
+        // Creating message hash.
+        const messageHash = hre.ethers.solidityPackedKeccak256(messageDataTypes, messageData);
 
-            // Arrayifying message hash.
-            const arrayifiedMessageHash = hre.ethers.getBytes(messageHash);
+        // Arrayifying message hash.
+        const arrayifiedMessageHash = hre.ethers.getBytes(messageHash);
 
-            // Getting signature.
-            const signature = await signer.signMessage(arrayifiedMessageHash);
+        // Getting signature.
+        const signature = await signer.signMessage(arrayifiedMessageHash);
 
-            // Sending transaction.
-            await dynamis.mintWithETH(quantity, deadline, signature, { value: value });
-        });
+        // Sending transaction.
+        await dynamis.mintWithETH(quantity, deadline, signature, { value: value });
+    });
+
+    it("should mint multiple with ETH", async function () {
+        const { signer, dynamis } = await loadFixture(deploy);
+
+        // Getting transaction and signature variables.
+        const caller = signer.address;
+        const startTokenId = (await dynamis.totalSupply()) + 1n;
+        const quantity = 2;
+        const deadline = parseInt(Date.now() / 1000);
+        const value = hre.ethers.parseEther("1");
+
+        // Message data.
+        const messageDataTypes = ["address", "uint256", "uint256"];
+        const messageData = [caller, startTokenId, deadline];
+
+        // Creating message hash.
+        const messageHash = hre.ethers.solidityPackedKeccak256(messageDataTypes, messageData);
+
+        // Arrayifying message hash.
+        const arrayifiedMessageHash = hre.ethers.getBytes(messageHash);
+
+        // Getting signature.
+        const signature = await signer.signMessage(arrayifiedMessageHash);
+
+        // Sending transaction.
+        await dynamis.mintWithETH(quantity, deadline, signature, { value: value });
     });
 });

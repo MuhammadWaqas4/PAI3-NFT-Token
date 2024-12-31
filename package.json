@@ -11,7 +11,8 @@
         "deploy-token-staging": "hardhat run scripts/deploy-token.js --network staging",
         "format": "prettier --check --write .prettierrc *.json contracts/**/*.sol {,scripts/,test/}*.js",
         "test": "hardhat test --network hardhat",
-        "test-force": "hardhat compile --force && hardhat test --network hardhat"
+        "test-force": "hardhat compile --force && hardhat test --network hardhat",
+        "test-quick": "hardhat test --no-compile --network hardhat"
     },
     "repository": {
         "type": "git",
@@ -26,7 +27,7 @@
         "dotenv": "^16.4.5",
         "envfile": "^7.1.0",
         "erc721a": "^4.3.0",
-        "hardhat": "^2.22.9",
+        "hardhat": "^2.22.17",
         "prettier": "^3.3.3",
         "prettier-plugin-package": "^1.4.0",
         "prettier-plugin-solidity": "^1.4.1",

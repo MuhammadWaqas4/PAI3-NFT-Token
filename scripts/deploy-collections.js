@@ -62,8 +62,8 @@ async function main() {
         const pai3Instance = await hre.ethers.getContractAt("PAI3", pai3Address);
 
         for (let i = 0; i < collectionAddresses.length; i++) {
-            const transaction = await pai3Instance.approve(collectionAddresses[i], BigInt(2 ** 256) - 1n);
-            await transaction.wait(1);
+            const approvalTransaction = await pai3Instance.approve(collectionAddresses[i], BigInt(2 ** 256) - 1n);
+            await approvalTransaction.wait(1);
         }
     }
 
