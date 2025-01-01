@@ -46,7 +46,7 @@ describe("Dynamis", function () {
         return { signer, pai3, dynamis };
     }
 
-    it("should mint single with ETH", async function () {
+    it("Should mint single with ETH", async function () {
         const { signer, dynamis } = await loadFixture(deploy);
 
         // Getting transaction and signature variables.
@@ -73,7 +73,7 @@ describe("Dynamis", function () {
         await dynamis.mintWithETH(quantity, deadline, signature, { value: value });
     });
 
-    it("should mint multiple with ETH", async function () {
+    it("Should mint multiple with ETH", async function () {
         const { signer, dynamis } = await loadFixture(deploy);
 
         // Getting transaction and signature variables.
