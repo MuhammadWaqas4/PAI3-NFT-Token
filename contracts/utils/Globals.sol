@@ -6,3 +6,13 @@ import { IERC20 } from "@openzeppelin/contracts/token/ERC20/IERC20.sol";
 
 /// @dev Arbitrary checksummed address to signify ETH.
 IERC20 constant _ETH = IERC20(0xEeeeeEeeeEeEeeEeEeEeeEEEeeeeEeeeeeeeEEeE);
+
+/**
+ * @dev For more efficient reverts.
+ */
+function _revert(bytes4 errorSelector) pure {
+    assembly {
+        mstore(0x00, errorSelector)
+        revert(0x00, 0x04)
+    }
+}

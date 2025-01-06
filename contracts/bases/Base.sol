@@ -16,7 +16,7 @@ import { ERC721A, IERC721A } from "erc721a/contracts/ERC721A.sol";
 import { BaseErrors } from "../interfaces/Errors.sol";
 import { IBase } from "../interfaces/IBase.sol";
 
-import { _ETH } from "../Globals.sol";
+import { _ETH } from "../utils/Globals.sol";
 
 /**
  * @title Base.

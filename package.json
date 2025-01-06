@@ -9,7 +9,7 @@
         "deploy-collections-staging": "hardhat run scripts/deploy-collections.js --network staging",
         "deploy-token": "hardhat run scripts/deploy-token.js",
         "deploy-token-staging": "hardhat run scripts/deploy-token.js --network staging",
-        "format": "prettier --check --write .prettierrc *.json contracts/**/*.sol {,scripts/,test/}*.js",
+        "format": "prettier --check --write .prettierrc *.json contracts/**/*.sol {,scripts,test}/*.js",
         "test": "hardhat test --network hardhat",
         "test-force": "hardhat compile --force && hardhat test --network hardhat",
         "test-quick": "hardhat test --no-compile --network hardhat"

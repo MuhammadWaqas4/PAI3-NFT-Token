@@ -10,6 +10,8 @@ import { Strings } from "@openzeppelin/contracts/utils/Strings.sol";
 import { BaseSimpleErrors } from "../interfaces/Errors.sol";
 import { IBaseSimple } from "../interfaces/IBaseSimple.sol";
 
+import { _revert } from "../utils/Globals.sol";
+
 /**
  * @title BaseSimple.
  * @author PAI3 Team.
@@ -109,15 +111,5 @@ abstract contract BaseSimple is
         emit SetBaseURI({ newBaseURI: newBaseURI, oldBaseURI: baseURI });
 
         baseURI = newBaseURI;
-    }
-
-    /**
-     * @dev For more efficient reverts.
-     */
-    function _revert(bytes4 errorSelector) private pure {
-        assembly {
-            mstore(0x00, errorSelector)
-            revert(0x00, 0x04)
-        }
     }
 }
