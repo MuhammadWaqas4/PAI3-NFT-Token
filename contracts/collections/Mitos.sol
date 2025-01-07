@@ -18,40 +18,11 @@ contract Mitos is BaseV1 {
 
     /**
      * @dev Constructor. Initializes parent contract.
-     * @param owner_ Address of the contract owner.
-     * @param pai3_ Address of the PAI3 token.
-     * @param feeWallet_ Address of the fee wallet.
-     * @param rewardWallet_ Address of the reward wallet.
-     * @param signer_ Address of the signatrue signer.
-     * @param baseURI_ Base URI for computing the tokenURI.
-     * @param tokens_ Addresses of the tokens to register as payment tokens.
-     * @param priceFeeds_ Addresses of the price feeds.
+     * @param params_ Params necessary for contract deployment.
+     * @param cap_ Cap on the number of minted tokens.
      */
     constructor(
-        address owner_,
-        IERC20 pai3_,
-        address feeWallet_,
-        address rewardWallet_,
-        address signer_,
-        string memory baseURI_,
-        IERC20[] memory tokens_,
-        AggregatorV3Interface[] memory priceFeeds_
-    )
-        BaseV1(
-            owner_,
-            "Mitos",
-            "MIS",
-            62_899_200,
-            0.000028807997557997 * 1e18,
-            100,
-            pai3_,
-            feeWallet_,
-            rewardWallet_,
-            signer_,
-            baseURI_,
-            tokens_,
-            priceFeeds_,
-            50_000
-        )
-    {}
+        BaseParams memory params_,
+        uint256 cap_
+    ) BaseV1(params_, cap_) {}
 }

@@ -7,54 +7,43 @@ import { ERC721, IERC721 } from "@openzeppelin/contracts/token/ERC721/ERC721.sol
 import { IERC165 } from "@openzeppelin/contracts/utils/introspection/IERC165.sol";
 import { Strings } from "@openzeppelin/contracts/utils/Strings.sol";
 
-import { BaseSimpleErrors } from "../interfaces/Errors.sol";
-import { IBaseSimple } from "../interfaces/IBaseSimple.sol";
+import { BaseAltErrors } from "../interfaces/Errors.sol";
+import { IBaseAlt } from "../interfaces/IBaseAlt.sol";
 
 import { _revert } from "../utils/Globals.sol";
 
 /**
- * @title BaseSimple.
+ * @title BaseAlt.
  * @author PAI3 Team.
- * @notice Base NFT collection.
+ * @notice Alternative base NFT collection.
  */
-abstract contract BaseSimple is
-    Ownable2Step,
-    ERC721,
-    BaseSimpleErrors,
-    IBaseSimple
-{
+abstract contract BaseAlt is Ownable2Step, ERC721, BaseAltErrors, IBaseAlt {
     using Strings for string;
 
     /* ========== STATE VARIABLES ========== */
 
-    /// @inheritdoc IBaseSimple
+    /// @inheritdoc IBaseAlt
     uint256 public totalSupply;
 
-    /// @inheritdoc IBaseSimple
+    /// @inheritdoc IBaseAlt
     string public baseURI;
 
     /* ========== CONSTRUCTOR ========== */
 
     /**
      * @dev Constructor. Assigns ownership and initializes variables.
-     * @param owner_ Address of the contract owner.
-     * @param name_ Token collection name.
-     * @param symbol_ Token collection symbol.
-     * @param baseURI_ Base URI for computing the tokenURI.
+     * @param paramsAlt_ Params necessary for contract deployment.
      */
     constructor(
-        address owner_,
-        string memory name_,
-        string memory symbol_,
-        string memory baseURI_
-    ) Ownable(owner_) ERC721(name_, symbol_) {
-        _setBaseURI(baseURI_);
+        BaseAltParams memory paramsAlt_
+    ) Ownable(paramsAlt_.owner) ERC721(paramsAlt_.name, paramsAlt_.symbol) {
+        _setBaseURI(paramsAlt_.baseURI);
     }
 
     /* ========== FUNCTIONS ========== */
 
     /**
-     * @inheritdoc IBaseSimple
+     * @inheritdoc IBaseAlt
      */
     function mint() external {
         if (balanceOf(msg.sender) > 0) {
@@ -69,7 +58,7 @@ abstract contract BaseSimple is
     }
 
     /**
-     * @inheritdoc IBaseSimple
+     * @inheritdoc IBaseAlt
      */
     function setBaseURI(string memory newBaseURI) external onlyOwner {
         _setBaseURI(newBaseURI);
@@ -84,7 +73,7 @@ abstract contract BaseSimple is
         bytes4 interfaceId
     ) public view override(ERC721, IERC165) returns (bool) {
         return
-            interfaceId == type(IBaseSimple).interfaceId ||
+            interfaceId == type(IBaseAlt).interfaceId ||
             super.supportsInterface(interfaceId);
     }
 

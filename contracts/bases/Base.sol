@@ -72,71 +72,50 @@ abstract contract Base is Ownable2Step, ERC721A, BaseErrors, IBase {
 
     /**
      * @dev Constructor. Assigns ownership and initializes variables.
-     * @param owner_ Address of the contract owner.
-     * @param name_ Token collection name.
-     * @param symbol_ Token collection symbol.
-     * @param rewardDuration_ Reward duration in seconds.
-     * @param rewardPerSecond_ Reward generated per second.
-     * @param baseCostSingle_ Base cost for a single token.
-     * @param pai3_ Address of the PAI3 token.
-     * @param feeWallet_ Address of the fee wallet.
-     * @param rewardWallet_ Address of the reward wallet.
-     * @param signer_ Address of the signatrue signer.
-     * @param baseURI_ Base URI for computing the tokenURI.
-     * @param tokens_ Addresses of the tokens to register as payment tokens.
-     * @param priceFeeds_ Addresses of the price feeds.
+     * @param params_ Params necessary for contract deployment.
      */
     constructor(
-        address owner_,
-        string memory name_,
-        string memory symbol_,
-        uint64 rewardDuration_,
-        uint256 rewardPerSecond_,
-        uint256 baseCostSingle_,
-        IERC20 pai3_,
-        address feeWallet_,
-        address rewardWallet_,
-        address signer_,
-        string memory baseURI_,
-        IERC20[] memory tokens_,
-        AggregatorV3Interface[] memory priceFeeds_
-    ) Ownable(owner_) ERC721A(name_, symbol_) {
+        BaseParams memory params_
+    ) Ownable(params_.owner) ERC721A(params_.name, params_.symbol) {
         if (
-            rewardDuration_ == 0 ||
-            rewardPerSecond_ == 0 ||
-            baseCostSingle_ == 0
+            params_.rewardDuration == 0 ||
+            params_.rewardPerSecond == 0 ||
+            params_.baseCostSingle == 0
         ) {
             _revert(InvalidValue.selector);
         }
 
-        if (feeWallet_ == address(0) || rewardWallet_ == address(0)) {
+        if (
+            params_.feeWallet == address(0) ||
+            params_.rewardWallet == address(0)
+        ) {
             _revert(InvalidAddress.selector);
         }
 
-        uint256 length = tokens_.length;
+        uint256 length = params_.tokens.length;
 
         if (length == 0) {
             _revert(InvalidArrayLength.selector);
         }
 
-        if (length != priceFeeds_.length) {
+        if (length != params_.priceFeeds.length) {
             _revert(InvalidArrayArity.selector);
         }
 
-        REWARD_DURATION = rewardDuration_;
+        REWARD_DURATION = params_.rewardDuration;
 
-        REWARD_PER_SECOND = rewardPerSecond_;
-        BASE_COST_SINGLE = baseCostSingle_;
+        REWARD_PER_SECOND = params_.rewardPerSecond;
+        BASE_COST_SINGLE = params_.baseCostSingle;
 
-        PAI3 = pai3_;
-        FEE_WALLET = feeWallet_;
-        REWARD_WALLET = rewardWallet_;
+        PAI3 = params_.pai3;
+        FEE_WALLET = params_.feeWallet;
+        REWARD_WALLET = params_.rewardWallet;
 
-        _updateSigner(signer_);
-        _setBaseURI(baseURI_);
+        _updateSigner(params_.signer);
+        _setBaseURI(params_.baseURI);
 
         for (uint256 i = 0; i < length; ++i) {
-            _updatePriceFeed(tokens_[i], priceFeeds_[i]);
+            _updatePriceFeed(params_.tokens[i], params_.priceFeeds[i]);
         }
     }
 

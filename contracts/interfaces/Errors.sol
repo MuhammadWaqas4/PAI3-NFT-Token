@@ -91,9 +91,9 @@ interface BaseErrors {
 }
 
 /**
- * @dev Errors for the BaseSimple contract.
+ * @dev Errors for the BaseAlt contract.
  */
-interface BaseSimpleErrors {
+interface BaseAltErrors {
     /**
      * @dev Indicates a failure with the `minter` if the `minter` already has a
      * `balance` of `1`.

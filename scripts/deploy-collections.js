@@ -10,7 +10,20 @@ async function main() {
     console.log("Chain:", networkName);
 
     // Deployment variables.
+    const collectionsToDeploy = [
+        0, // Dynamis
+        1, // Ethos
+        2, // Mitos
+        3, // Osmos
+        4 // Seismos
+    ];
+
     const ownerAddress = process.env.OWNER_ADDRESS;
+    const names = process.env.NAMES.split(" ");
+    const symbols = process.env.SYMBOLS.split(" ");
+    const rewardDurations = process.env.REWARD_DURATIONS.split(" ");
+    const rewardPerSeconds = process.env.REWARD_PER_SECONDS.split(" ");
+    const baseCostSingles = process.env.BASE_COST_SINGLES.split(" ");
     const pai3Address = process.env.PAI3_ADDRESS;
     const feeWalletAddress = process.env.FEE_WALLET_ADDRESS;
     const rewardWalletAddress = process.env.REWARD_WALLET_ADDRESS;
@@ -18,43 +31,80 @@ async function main() {
     const baseURIs = process.env.BASE_URIS.split(" ");
     const tokenAddresses = process.env.TOKEN_ADDRESSES.split(" ");
     const priceFeedAddresses = process.env.PRICE_FEED_ADDRESSES.split(" ");
+    const initialCap = process.env.INITIAL_CAP;
+    const caps = process.env.CAPS.split(" ");
 
     // Common deployment variables.
-    const baseConstructorArguments = {
+    const params = {
         owner: ownerAddress,
+        name: "",
+        symbol: "",
+        rewardDuration: "",
+        rewardPerSecond: "",
+        baseCostSingle: "",
         pai3: pai3Address,
         feeWallet: feeWalletAddress,
         rewardWallet: rewardWalletAddress,
         signer: signerAddress,
         baseURI: "",
-        token: tokenAddresses,
-        priceFeed: priceFeedAddresses
+        tokens: tokenAddresses,
+        priceFeeds: priceFeedAddresses
     };
-    const baseSimpleConstructorArguments = {
+    const paramsAlt = {
         owner: ownerAddress,
+        name: "",
+        symbol: "",
         baseURI: ""
     };
 
+    const baseV2Params = {
+        params: params,
+        initialCap: initialCap,
+        cap: ""
+    };
+    const baseV1Params = {
+        params: params,
+        cap: ""
+    };
+    const baseAltParams = {
+        params: paramsAlt
+    };
+
     // Structuring deployment variables.
-    const collectionContractNames = ["Dynamis", "Ethos", "Mitos", "Osmos", "Seismos"];
-    let collectionConstructorArguments = [
-        baseConstructorArguments,
-        baseConstructorArguments,
-        baseConstructorArguments,
-        baseConstructorArguments,
-        baseSimpleConstructorArguments
-    ];
-    collectionConstructorArguments = collectionConstructorArguments.map((value, index) => {
-        value = structuredClone(value);
-        value.baseURI = baseURIs[index];
-        value = Object.values(value);
+    let collectionParams = [baseV2Params, baseV1Params, baseV1Params, baseV1Params, baseAltParams];
+    collectionParams = collectionParams.map((value, index) => {
+        if (value === baseAltParams) {
+            value = structuredClone(value);
+
+            value.params.name = names[index];
+            value.params.symbol = symbols[index];
+            value.params.baseURI = baseURIs[index];
+
+            value = Object.values(value);
+        } else {
+            value = structuredClone(value);
+
+            value.params.name = names[index];
+            value.params.symbol = symbols[index];
+            value.params.rewardDuration = rewardDurations[index];
+            value.params.rewardPerSecond = rewardPerSeconds[index];
+            value.params.baseCostSingle = baseCostSingles[index];
+            value.params.baseURI = baseURIs[index];
+            value.cap = caps[index];
+
+            value = Object.values(value);
+        }
+
         return value;
     });
 
     // Deploying collections.
     const collectionAddresses = [];
-    for (let i = 0; i < collectionContractNames.length; i++) {
-        collectionAddresses.push(await deploy(collectionContractNames[i], collectionConstructorArguments[i]));
+
+    for (let i = 0; i < collectionsToDeploy.length; i++) {
+        let index = collectionsToDeploy[i];
+
+        collectionAddresses.push(await deploy(collectionParams[index][0].name, collectionParams[index]));
     }
 
     // Setting up collections.
@@ -72,7 +122,9 @@ async function main() {
 
     // Verifying collections.
     for (let i = 0; i < collectionAddresses.length; i++) {
-        await verify(collectionAddresses[i], collectionConstructorArguments[i]);
+        let index = collectionsToDeploy[i];
+
+        await verify(collectionAddresses[i], collectionParams[index]);
     }
 
     // Exiting.

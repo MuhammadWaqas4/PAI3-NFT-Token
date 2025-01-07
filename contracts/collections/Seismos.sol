@@ -2,23 +2,19 @@
 
 pragma solidity 0.8.28;
 
-import { BaseSimple } from "../bases/BaseSimple.sol";
+import { BaseAlt } from "../bases/BaseAlt.sol";
 
 /**
  * @title Seismos.
  * @author PAI3 Team.
  * @notice Seismos NFT collection.
  */
-contract Seismos is BaseSimple {
+contract Seismos is BaseAlt {
     /* ========== CONSTRUCTOR ========== */
 
     /**
      * @dev Constructor. Initializes parent contract.
-     * @param owner_ Address of the contract owner.
-     * @param baseURI_ Base URI for computing the tokenURI.
+     * @param paramsAlt_ Params necessary for contract deployment.
      */
-    constructor(
-        address owner_,
-        string memory baseURI_
-    ) BaseSimple(owner_, "Seismos", "SES", baseURI_) {}
+    constructor(BaseAltParams memory paramsAlt_) BaseAlt(paramsAlt_) {}
 }

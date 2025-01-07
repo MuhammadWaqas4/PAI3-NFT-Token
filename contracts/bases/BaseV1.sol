@@ -17,7 +17,7 @@ import { Base } from "./Base.sol";
 /**
  * @title BaseV1.
  * @author PAI3 Team.
- * @notice Base NFT collection version 1.
+ * @notice First extended variant of the base NFT collection.
  */
 abstract contract BaseV1 is BaseV1Errors, IBaseV1, Base {
     using SafeERC20 for IERC20;
@@ -35,52 +35,10 @@ abstract contract BaseV1 is BaseV1Errors, IBaseV1, Base {
 
     /**
      * @dev Constructor. Initializes parent contract.
-     * @param owner_ Address of the contract owner.
-     * @param name_ Token collection name.
-     * @param symbol_ Token collection symbol.
-     * @param rewardDuration_ Reward duration in seconds.
-     * @param rewardPerSecond_ Reward generated per second.
-     * @param baseCostSingle_ Base cost for a single token.
-     * @param pai3_ Address of the PAI3 token.
-     * @param feeWallet_ Address of the fee wallet.
-     * @param rewardWallet_ Address of the reward wallet.
-     * @param signer_ Address of the signatrue signer.
-     * @param baseURI_ Base URI for computing the tokenURI.
-     * @param tokens_ Addresses of the tokens to register as payment tokens.
-     * @param priceFeeds_ Addresses of the price feeds.
+     * @param params_ Params necessary for contract deployment.
+     * @param cap_ Cap on the number of minted tokens.
      */
-    constructor(
-        address owner_,
-        string memory name_,
-        string memory symbol_,
-        uint64 rewardDuration_,
-        uint256 rewardPerSecond_,
-        uint256 baseCostSingle_,
-        IERC20 pai3_,
-        address feeWallet_,
-        address rewardWallet_,
-        address signer_,
-        string memory baseURI_,
-        IERC20[] memory tokens_,
-        AggregatorV3Interface[] memory priceFeeds_,
-        uint256 cap_
-    )
-        Base(
-            owner_,
-            name_,
-            symbol_,
-            rewardDuration_,
-            rewardPerSecond_,
-            baseCostSingle_,
-            pai3_,
-            feeWallet_,
-            rewardWallet_,
-            signer_,
-            baseURI_,
-            tokens_,
-            priceFeeds_
-        )
-    {
+    constructor(BaseParams memory params_, uint256 cap_) Base(params_) {
         if (cap_ == 0) {
             _revert(InvalidValue.selector);
         }

@@ -18,7 +18,7 @@ import { Base } from "./Base.sol";
 /**
  * @title BaseV2.
  * @author PAI3 Team.
- * @notice Base NFT collection version 2.
+ * @notice Second extended variant of the base NFT collection.
  */
 abstract contract BaseV2 is Pausable, BaseV2Errors, IBaseV2, Base {
     using SafeERC20 for IERC20;
@@ -29,7 +29,7 @@ abstract contract BaseV2 is Pausable, BaseV2Errors, IBaseV2, Base {
     /// @dev One year time in seconds.
     uint256 private constant _ONE_YEAR_TIME = 31_536_000 seconds;
 
-    /// @dev Cap on the number of initially minted `tokens`.
+    /// @dev Cap on the number of minted `tokens` initially.
     /// NOTE: Once this cap is reached further minting will be paused until the
     /// next phase.
     uint256 private immutable _INITIAL_CAP;
@@ -45,55 +45,15 @@ abstract contract BaseV2 is Pausable, BaseV2Errors, IBaseV2, Base {
 
     /**
      * @dev Constructor. Initializes parent contract.
-     * @param owner_ Address of the contract owner.
-     * @param name_ Token collection name.
-     * @param symbol_ Token collection symbol.
-     * @param rewardDuration_ Reward duration in seconds.
-     * @param rewardPerSecond_ Reward generated per second.
-     * @param baseCostSingle_ Base cost for a single token.
-     * @param pai3_ Address of the PAI3 token.
-     * @param feeWallet_ Address of the fee wallet.
-     * @param rewardWallet_ Address of the reward wallet.
-     * @param signer_ Address of the signatrue signer.
-     * @param baseURI_ Base URI for computing the tokenURI.
-     * @param tokens_ Addresses of the tokens to register as payment tokens.
-     * @param priceFeeds_ Addresses of the price feeds.
-     * @param initialCap_ Cap on the number of initially minted tokens.
+     * @param params_ Params necessary for contract deployment.
+     * @param initialCap_ Cap on the number of minted tokens initially.
      * @param cap_ Cap on the number of minted tokens.
      */
     constructor(
-        address owner_,
-        string memory name_,
-        string memory symbol_,
-        uint64 rewardDuration_,
-        uint256 rewardPerSecond_,
-        uint256 baseCostSingle_,
-        IERC20 pai3_,
-        address feeWallet_,
-        address rewardWallet_,
-        address signer_,
-        string memory baseURI_,
-        IERC20[] memory tokens_,
-        AggregatorV3Interface[] memory priceFeeds_,
+        BaseParams memory params_,
         uint256 initialCap_,
         uint256 cap_
-    )
-        Base(
-            owner_,
-            name_,
-            symbol_,
-            rewardDuration_,
-            rewardPerSecond_,
-            baseCostSingle_,
-            pai3_,
-            feeWallet_,
-            rewardWallet_,
-            signer_,
-            baseURI_,
-            tokens_,
-            priceFeeds_
-        )
-    {
+    ) Base(params_) {
         if (initialCap_ == 0 || cap_ == 0) {
             _revert(InvalidValue.selector);
         }

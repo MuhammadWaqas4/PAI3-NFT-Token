@@ -5,11 +5,24 @@ pragma solidity 0.8.28;
 import { IERC721 } from "@openzeppelin/contracts/token/ERC721/IERC721.sol";
 
 /**
- * @title IBaseSimple.
+ * @title IBaseAlt.
  * @author PAI3 Team.
- * @notice BaseSimple NFT collection interface.
+ * @notice BaseAlt NFT collection interface.
  */
-interface IBaseSimple is IERC721 {
+interface IBaseAlt is IERC721 {
+    /* ========== TYPES ========== */
+
+    struct BaseAltParams {
+        /// @custom:member owner Address of the contract owner.
+        address owner;
+        /// @custom:member name Token collection name.
+        string name;
+        /// @custom:member symbol Token collection symbol.
+        string symbol;
+        /// @custom:member baseURI Base URI for computing the tokenURI.
+        string baseURI;
+    }
+
     /* ========== EVENTS ========== */
 
     /**

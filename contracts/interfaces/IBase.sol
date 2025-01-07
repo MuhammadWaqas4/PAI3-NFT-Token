@@ -16,10 +16,47 @@ import { IERC721A } from "erc721a/contracts/IERC721A.sol";
 interface IBase is IERC721A {
     /* ========== TYPES ========== */
 
+    struct BaseParams {
+        /// @custom:member owner Address of the contract owner.
+        address owner;
+        /// @custom:member name Token collection name.
+        string name;
+        /// @custom:member symbol Token collection symbol.
+        string symbol;
+        /// @custom:member rewardDuration Reward duration in seconds.
+        uint64 rewardDuration;
+        /// @custom:member rewardPerSecond Reward generated per second.
+        uint256 rewardPerSecond;
+        /// @custom:member baseCostSingle Base cost for a single token.
+        uint256 baseCostSingle;
+        /// @custom:member pai3 Address of the PAI3 token.
+        IERC20 pai3;
+        /// @custom:member feeWallet Address of the fee wallet.
+        address feeWallet;
+        /// @custom:member rewardWallet Address of the reward wallet.
+        address rewardWallet;
+        /// @custom:member signer Address of the signatrue signer.
+        address signer;
+        /// @custom:member baseURI Base URI for computing the tokenURI.
+        string baseURI;
+        /// @custom:member tokens Addresses of the tokens to register as payment
+        /// tokens.
+        IERC20[] tokens;
+        /// @custom:member priceFeeds Addresses of the price feeds.
+        AggregatorV3Interface[] priceFeeds;
+    }
+
     struct Record {
+        /// @custom:member startTimestamp Timestamp at which a token was minted.
         uint64 startTimestamp;
+        /// @custom:member vestingEndTimestamp Timestamp after which vesting
+        /// will end.
         uint64 vestingEndTimestamp;
+        /// @custom:member rewardingEndTimestamp Timestamp after whichreward
+        /// generation will stop.
         uint64 rewardingEndTimestamp;
+        /// @custom:member lastInteractedTimestamp Timestamp at which a
+        /// transfer, if applicable, was performed on this token.
         uint64 lastInteractedTimestamp;
     }
 
