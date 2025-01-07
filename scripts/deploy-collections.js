@@ -10,9 +10,9 @@ async function main() {
     console.log("Chain:", networkName);
 
     // Deployment variables.
-    const collectionsToDeploy = [
-        0, // Dynamis
-        1, // Ethos
+    const deployments = [
+        // 0, // Dynamis
+        // 1, // Ethos
         2, // Mitos
         3, // Osmos
         4 // Seismos
@@ -71,49 +71,53 @@ async function main() {
     };
 
     // Structuring deployment variables.
-    let collectionParams = [baseV2Params, baseV1Params, baseV1Params, baseV1Params, baseAltParams];
-    collectionParams = collectionParams.map((value, index) => {
-        if (value === baseAltParams) {
-            value = structuredClone(value);
+    const defaultParams = [baseV2Params, baseV1Params, baseV1Params, baseV1Params, baseAltParams];
+    const collectionParams = defaultParams.map((value, index) => {
+        let result = structuredClone(value);
 
-            value.params.name = names[index];
-            value.params.symbol = symbols[index];
-            value.params.baseURI = baseURIs[index];
-
-            value = Object.values(value);
-        } else {
-            value = structuredClone(value);
-
-            value.params.name = names[index];
-            value.params.symbol = symbols[index];
-            value.params.rewardDuration = rewardDurations[index];
-            value.params.rewardPerSecond = rewardPerSeconds[index];
-            value.params.baseCostSingle = baseCostSingles[index];
-            value.params.baseURI = baseURIs[index];
-            value.cap = caps[index];
-
-            value = Object.values(value);
+        if (value !== baseAltParams) {
+            result.params.rewardDuration = rewardDurations[index];
+            result.params.rewardPerSecond = rewardPerSeconds[index];
+            result.params.baseCostSingle = baseCostSingles[index];
+            result.cap = caps[index];
         }
 
-        return value;
+        result.params.name = names[index];
+        result.params.symbol = symbols[index];
+        result.params.baseURI = baseURIs[index];
+
+        result = Object.values(result);
+
+        return result;
     });
 
     // Deploying collections.
     const collectionAddresses = [];
+    const collectionNames = [];
 
-    for (let i = 0; i < collectionsToDeploy.length; i++) {
-        let index = collectionsToDeploy[i];
+    for (let i = 0; i < deployments.length; i++) {
+        const index = deployments[i];
 
-        collectionAddresses.push(await deploy(collectionParams[index][0].name, collectionParams[index]));
+        collectionNames.push(collectionParams[index][0].name);
+
+        collectionAddresses.push(await deploy(collectionNames[i], collectionParams[index]));
     }
 
     // Setting up collections.
-    if (networkName === "staging") {
+    if (networkName === "staging" || networkName === "hardhat") {
         const pai3Instance = await hre.ethers.getContractAt("PAI3", pai3Address);
 
         for (let i = 0; i < collectionAddresses.length; i++) {
-            const approvalTransaction = await pai3Instance.approve(collectionAddresses[i], BigInt(2 ** 256) - 1n);
-            await approvalTransaction.wait(1);
+            const index = deployments[i];
+
+            if (defaultParams[index] !== baseAltParams) {
+                const approvalTransaction = await pai3Instance.approve(collectionAddresses[i], BigInt(2 ** 256) - 1n);
+                await approvalTransaction.wait(1);
+
+                const name = collectionNames[i];
+
+                console.log(`PAI3 approved for ${name}`);
+            }
         }
     }
 
@@ -122,9 +126,19 @@ async function main() {
 
     // Verifying collections.
     for (let i = 0; i < collectionAddresses.length; i++) {
-        let index = collectionsToDeploy[i];
+        let index = deployments[i];
 
-        await verify(collectionAddresses[i], collectionParams[index]);
+        if (defaultParams[index] === baseV1Params) {
+            const name = collectionNames[i];
+
+            await verifyWithPath(
+                collectionAddresses[i],
+                `contracts/collections/${name}.sol:${name}`,
+                collectionParams[index]
+            );
+        } else {
+            await verify(collectionAddresses[i], collectionParams[index]);
+        }
     }
 
     // Exiting.
@@ -134,7 +148,8 @@ async function main() {
 async function checkGasPrice(gasPriceUpperBound) {
     let feeData = await hre.ethers.provider.getFeeData();
     let gasPrice = parseFloat(hre.ethers.formatUnits(feeData.gasPrice, "gwei"));
-    console.log("Gas Price:", gasPrice, "Gwei");
+
+    console.log(`Gas Price: ${gasPrice} Gwei`);
 
     if (gasPriceUpperBound != "" && gasPriceUpperBound != "0") {
         while (gasPrice > gasPriceUpperBound) {
@@ -142,7 +157,8 @@ async function checkGasPrice(gasPriceUpperBound) {
 
             if (gasPrice != hre.ethers.formatUnits(feeData.gasPrice, "gwei")) {
                 gasPrice = parseFloat(hre.ethers.formatUnits(feeData.gasPrice, "gwei"));
-                console.log("Gas Price:", gasPrice, "Gwei");
+
+                console.log(`Gas Price: ${gasPrice} Gwei`);
             }
         }
     }
