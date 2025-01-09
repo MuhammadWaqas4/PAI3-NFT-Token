@@ -9,10 +9,12 @@
         "deploy-collections-staging": "hardhat run scripts/deploy-collections.js --network staging",
         "deploy-token": "hardhat run scripts/deploy-token.js",
         "deploy-token-staging": "hardhat run scripts/deploy-token.js --network staging",
-        "format": "prettier --check --write .prettierrc *.json contracts/**/*.sol {,scripts,test}/*.js",
-        "test": "hardhat test --network hardhat",
-        "test-force": "hardhat compile --force && hardhat test --network hardhat",
-        "test-quick": "hardhat test --no-compile --network hardhat"
+        "format": "prettier --check --write .prettierrc *.json {contracts,test}/**/*.sol {,scripts}/*.js",
+        "test": "forge test",
+        "test-force": "forge compile --force && forge test",
+        "test-log": "forge test -vv",
+        "test-quick": "forge test --no-compile",
+        "test-verbose": "forge test -vvvv"
     },
     "repository": {
         "type": "git",
@@ -22,6 +24,7 @@
     "license": "MIT",
     "devDependencies": {
         "@chainlink/contracts": "^1.3.0",
+        "@nomicfoundation/hardhat-foundry": "^1.1.3",
         "@nomicfoundation/hardhat-toolbox": "^5.0.0",
         "@openzeppelin/contracts": "^5.0.2",
         "dotenv": "^16.4.5",

@@ -1,3 +1,4 @@
+require("@nomicfoundation/hardhat-foundry");
 require("@nomicfoundation/hardhat-toolbox");
 require("dotenv").config();
 
@@ -23,7 +24,7 @@ module.exports = {
             }
         },
         staging: {
-            url: process.env.URL_STAGING ? process.env.URL_STAGING : "https://rpc.example.org/",
+            url: process.env.URL_STAGING ? process.env.URL_STAGING : "https://sepolia.infura.io",
             accounts: [
                 process.env.PRIVATE_KEY_STAGING
                     ? process.env.PRIVATE_KEY_STAGING
@@ -31,7 +32,7 @@ module.exports = {
             ]
         },
         mainnet: {
-            url: process.env.URL_MAINNET ? process.env.URL_MAINNET : "https://mainnet.infura.io/v3/",
+            url: process.env.URL_MAINNET ? process.env.URL_MAINNET : "https://mainnet.infura.io",
             accounts: [
                 process.env.PRIVATE_KEY_MAINNET
                     ? process.env.PRIVATE_KEY_MAINNET
@@ -42,7 +43,6 @@ module.exports = {
     etherscan: {
         apiKey: {
             sepolia: process.env.BLOCK_EXPLORER_API_KEY_ETHEREUM,
-            holesky: process.env.BLOCK_EXPLORER_API_KEY_ETHEREUM,
             mainnet: process.env.BLOCK_EXPLORER_API_KEY_ETHEREUM
         }
     }

@@ -35,7 +35,7 @@ interface IBase is IERC721A {
         address feeWallet;
         /// @custom:member rewardWallet Address of the reward wallet.
         address rewardWallet;
-        /// @custom:member signer Address of the signatrue signer.
+        /// @custom:member signer Address of the signature signer.
         address signer;
         /// @custom:member baseURI Base URI for computing the tokenURI.
         string baseURI;
