@@ -45,7 +45,7 @@ contract TestHelper is Test {
         uint256 deadline;
         uint256 privateKey;
         uint256 quantity;
-        uint256 costSingle;
+        uint256 cost;
         address caller;
         IERC20 token;
         IBase collection;
@@ -87,46 +87,39 @@ contract TestHelper is Test {
 
     /* ========== HELPER FUNCTIONS ========== */
 
-    function _mint(MintParams memory params) internal returns (uint256) {
-        uint256 cost = params.quantity * params.costSingle;
+    function _mint(MintParams memory params) internal {
+        uint256 startTokenId = params.collection.totalSupply() + 1;
+        bytes memory signature = _sign(
+            params.caller,
+            startTokenId,
+            params.deadline,
+            params.privateKey
+        );
 
-        {
-            // scope to avoid stack too deep errors
-            uint256 startTokenId = params.collection.totalSupply() + 1;
-            bytes memory signature = _sign(
-                params.caller,
-                startTokenId,
-                params.deadline,
-                params.privateKey
-            );
-
-            if (params.token == _ETH) {
-                if (params.errorSelector != 0x0) {
-                    vm.expectRevert(params.errorSelector);
-                }
-
-                params.collection.mintWithETH{ value: cost }(
-                    params.quantity,
-                    params.deadline,
-                    signature
-                );
-            } else {
-                params.token.approve(address(params.collection), cost);
-
-                if (params.errorSelector != 0x0) {
-                    vm.expectRevert(params.errorSelector);
-                }
-
-                params.collection.mint(
-                    params.token,
-                    params.quantity,
-                    params.deadline,
-                    signature
-                );
+        if (params.token == _ETH) {
+            if (params.errorSelector != 0x0) {
+                vm.expectRevert(params.errorSelector);
             }
-        }
 
-        return cost;
+            params.collection.mintWithETH{ value: params.cost }(
+                params.quantity,
+                params.deadline,
+                signature
+            );
+        } else {
+            params.token.approve(address(params.collection), params.cost);
+
+            if (params.errorSelector != 0x0) {
+                vm.expectRevert(params.errorSelector);
+            }
+
+            params.collection.mint(
+                params.token,
+                params.quantity,
+                params.deadline,
+                signature
+            );
+        }
     }
 
     function _sign(

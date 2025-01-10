@@ -123,141 +123,151 @@ contract DynamisTest is ERC721Holder, TestHelper {
     /* ========== TEST FUNCTIONS ========== */
 
     function test_MintWithETH() external {
+        // Mint params.
+
+        MintParams memory params = MintParams({
+            deadline: deadline,
+            privateKey: signerPrivateKey,
+            quantity: 0,
+            cost: 0,
+            token: IERC20(address(0)),
+            caller: caller,
+            collection: dynamis,
+            errorSelector: 0x0
+        });
+
+        params.token = _ETH;
+
         // Minting single quantity.
 
-        uint256 startTokenId = dynamis.totalSupply() + 1;
-        bytes memory signature = _sign(
-            caller,
-            startTokenId,
-            deadline,
-            signerPrivateKey
-        );
-
-        uint256 quantity = 1;
-        uint256 cost = quantity * costSingleETH;
+        params.quantity = 1;
+        params.cost = params.quantity * costSingleETH;
 
         uint256 callerETH0 = address(this).balance;
         uint256 callerDynamis0 = dynamis.balanceOf(address(this));
         uint256 treasuryETH0 = treasuryWallet.balance;
-        dynamis.mintWithETH{ value: cost }(quantity, deadline, signature);
+
+        _mint(params);
+
         uint256 callerETH1 = address(this).balance;
         uint256 callerDynamis1 = dynamis.balanceOf(address(this));
         uint256 treasuryETH1 = treasuryWallet.balance;
 
-        assertEq(callerETH0 - cost, callerETH1);
-        assertEq(callerDynamis1 - quantity, callerDynamis0);
-        assertEq(treasuryETH1 - treasuryETH0, cost);
+        assertEq(callerETH0 - params.cost, callerETH1);
+        assertEq(callerDynamis1 - params.quantity, callerDynamis0);
+        assertEq(treasuryETH1 - treasuryETH0, params.cost);
 
         // Minting more than one quantity.
 
-        startTokenId = dynamis.totalSupply() + 1;
-        signature = _sign(caller, startTokenId, deadline, signerPrivateKey);
-
-        quantity = 10;
-        cost = quantity * costSingleETH;
+        params.quantity = 10;
+        params.cost = params.quantity * costSingleETH;
 
         callerETH0 = callerETH1;
         callerDynamis0 = callerDynamis1;
         treasuryETH0 = treasuryETH1;
-        dynamis.mintWithETH{ value: cost }(quantity, deadline, signature);
+
+        _mint(params);
+
         callerETH1 = address(this).balance;
         callerDynamis1 = dynamis.balanceOf(address(this));
         treasuryETH1 = treasuryWallet.balance;
 
-        assertEq(callerETH0 - cost, callerETH1);
-        assertEq(callerDynamis1 - quantity, callerDynamis0);
-        assertEq(treasuryETH1 - treasuryETH0, cost);
+        assertEq(callerETH0 - params.cost, callerETH1);
+        assertEq(callerDynamis1 - params.quantity, callerDynamis0);
+        assertEq(treasuryETH1 - treasuryETH0, params.cost);
 
         // Minting single quantity and excess payable cost.
 
-        startTokenId = dynamis.totalSupply() + 1;
-        signature = _sign(caller, startTokenId, deadline, signerPrivateKey);
-
-        quantity = 1;
-        cost = (quantity * costSingleETH) + 1e18;
+        params.quantity = 1;
+        params.cost = (params.quantity * costSingleETH) + 1e18;
 
         callerETH0 = callerETH1;
         callerDynamis0 = callerDynamis1;
         treasuryETH0 = treasuryETH1;
-        dynamis.mintWithETH{ value: cost }(quantity, deadline, signature);
+
+        _mint(params);
+
         callerETH1 = address(this).balance;
         callerDynamis1 = dynamis.balanceOf(address(this));
         treasuryETH1 = treasuryWallet.balance;
 
-        assertEq(callerETH0 - (cost - 1e18), callerETH1);
-        assertEq(callerDynamis1 - quantity, callerDynamis0);
-        assertEq(treasuryETH1 - treasuryETH0, cost - 1e18);
+        assertEq(callerETH0 - (params.cost - 1e18), callerETH1);
+        assertEq(callerDynamis1 - params.quantity, callerDynamis0);
+        assertEq(treasuryETH1 - treasuryETH0, params.cost - 1e18);
 
         // Minting more than one quantity and excess payable cost.
 
-        startTokenId = dynamis.totalSupply() + 1;
-        signature = _sign(caller, startTokenId, deadline, signerPrivateKey);
-
-        quantity = 10;
-        cost = (quantity * costSingleETH) + 1e18;
+        params.quantity = 10;
+        params.cost = (params.quantity * costSingleETH) + 1e18;
 
         callerETH0 = callerETH1;
         callerDynamis0 = callerDynamis1;
         treasuryETH0 = treasuryETH1;
-        dynamis.mintWithETH{ value: cost }(quantity, deadline, signature);
+
+        _mint(params);
+
         callerETH1 = address(this).balance;
         callerDynamis1 = dynamis.balanceOf(address(this));
         treasuryETH1 = treasuryWallet.balance;
 
-        assertEq(callerETH0 - (cost - 1e18), callerETH1);
-        assertEq(callerDynamis1 - quantity, callerDynamis0);
-        assertEq(treasuryETH1 - treasuryETH0, cost - 1e18);
+        assertEq(callerETH0 - (params.cost - 1e18), callerETH1);
+        assertEq(callerDynamis1 - params.quantity, callerDynamis0);
+        assertEq(treasuryETH1 - treasuryETH0, params.cost - 1e18);
     }
 
     function test_Mint() external {
+        // Mint params.
+
+        MintParams memory params = MintParams({
+            deadline: deadline,
+            privateKey: signerPrivateKey,
+            quantity: 0,
+            cost: 0,
+            token: IERC20(address(0)),
+            caller: caller,
+            collection: dynamis,
+            errorSelector: 0x0
+        });
+
+        params.token = _USDT;
+
         // Minting single quantity.
 
-        uint256 startTokenId = dynamis.totalSupply() + 1;
-        bytes memory signature = _sign(
-            caller,
-            startTokenId,
-            deadline,
-            signerPrivateKey
-        );
-
-        uint256 quantity = 1;
-        uint256 cost = quantity * costSingleUSDT;
-
-        _USDT.approve(address(dynamis), cost);
+        params.quantity = 1;
+        params.cost = params.quantity * costSingleUSDT;
 
         uint256 callerUSDT0 = _USDT.balanceOf(address(this));
         uint256 callerDynamis0 = dynamis.balanceOf(address(this));
         uint256 treasuryUSDT0 = _USDT.balanceOf(treasuryWallet);
-        dynamis.mint(_USDT, quantity, deadline, signature);
+
+        _mint(params);
+
         uint256 callerUSDT1 = _USDT.balanceOf(address(this));
         uint256 callerDynamis1 = dynamis.balanceOf(address(this));
         uint256 treasuryUSDT1 = _USDT.balanceOf(treasuryWallet);
 
-        assertEq(callerUSDT0 - cost, callerUSDT1);
-        assertEq(callerDynamis1 - quantity, callerDynamis0);
-        assertEq(treasuryUSDT1 - treasuryUSDT0, cost);
+        assertEq(callerUSDT0 - params.cost, callerUSDT1);
+        assertEq(callerDynamis1 - params.quantity, callerDynamis0);
+        assertEq(treasuryUSDT1 - treasuryUSDT0, params.cost);
 
         // Minting more than one quantity.
 
-        startTokenId = dynamis.totalSupply() + 1;
-        signature = _sign(caller, startTokenId, deadline, signerPrivateKey);
-
-        quantity = 10;
-        cost = quantity * costSingleUSDT;
-
-        _USDT.approve(address(dynamis), cost);
+        params.quantity = 10;
+        params.cost = params.quantity * costSingleUSDT;
 
         callerUSDT0 = callerUSDT1;
         callerDynamis0 = callerDynamis1;
         treasuryUSDT0 = treasuryUSDT1;
-        dynamis.mint(_USDT, quantity, deadline, signature);
+
+        _mint(params);
+
         callerUSDT1 = _USDT.balanceOf(address(this));
         callerDynamis1 = dynamis.balanceOf(address(this));
         treasuryUSDT1 = _USDT.balanceOf(treasuryWallet);
 
-        assertEq(callerUSDT0 - cost, callerUSDT1);
-        assertEq(callerDynamis1 - quantity, callerDynamis0);
-        assertEq(treasuryUSDT1 - treasuryUSDT0, cost);
+        assertEq(callerUSDT0 - params.cost, callerUSDT1);
+        assertEq(callerDynamis1 - params.quantity, callerDynamis0);
+        assertEq(treasuryUSDT1 - treasuryUSDT0, params.cost);
     }
 
     function test_Cap() external {
@@ -267,7 +277,7 @@ contract DynamisTest is ERC721Holder, TestHelper {
             deadline: deadline,
             privateKey: signerPrivateKey,
             quantity: 0,
-            costSingle: 0,
+            cost: 0,
             token: IERC20(address(0)),
             caller: caller,
             collection: dynamis,
@@ -277,7 +287,7 @@ contract DynamisTest is ERC721Holder, TestHelper {
         // Minting first half of first phase cap with ETH.
 
         params.quantity = initialCap / 2;
-        params.costSingle = costSingleETH;
+        params.cost = params.quantity * costSingleETH;
         params.token = _ETH;
         params.errorSelector = 0x0;
 
@@ -286,7 +296,7 @@ contract DynamisTest is ERC721Holder, TestHelper {
         // // Minting second half of first phase cap with USDT.
 
         params.quantity = (initialCap / 2) - 1;
-        params.costSingle = costSingleUSDT;
+        params.cost = params.quantity * costSingleUSDT;
         params.token = _USDT;
         params.errorSelector = 0x0;
 
@@ -295,14 +305,14 @@ contract DynamisTest is ERC721Holder, TestHelper {
         // Check revert when exceeding cap.
 
         params.quantity = 2;
-        params.costSingle = costSingleETH;
+        params.cost = params.quantity * costSingleETH;
         params.token = _ETH;
         params.errorSelector = BaseV2Errors.ExceededCap.selector;
 
         _mint(params);
 
         params.quantity = initialCap;
-        params.costSingle = costSingleUSDT;
+        params.cost = params.quantity * costSingleUSDT;
         params.token = _USDT;
         params.errorSelector = BaseV2Errors.ExceededCap.selector;
 
@@ -311,7 +321,7 @@ contract DynamisTest is ERC721Holder, TestHelper {
         // Minting single quantity to pause first phase.
 
         params.quantity = 1;
-        params.costSingle = costSingleETH;
+        params.cost = params.quantity * costSingleETH;
         params.token = _ETH;
         params.errorSelector = 0x0;
 
@@ -320,14 +330,14 @@ contract DynamisTest is ERC721Holder, TestHelper {
         // Check revert when paused.
 
         params.quantity = 2;
-        params.costSingle = costSingleUSDT;
+        params.cost = params.quantity * costSingleUSDT;
         params.token = _USDT;
         params.errorSelector = Pausable.EnforcedPause.selector;
 
         _mint(params);
 
         params.quantity = initialCap;
-        params.costSingle = costSingleETH;
+        params.cost = params.quantity * costSingleETH;
         params.token = _ETH;
         params.errorSelector = Pausable.EnforcedPause.selector;
 
@@ -354,7 +364,7 @@ contract DynamisTest is ERC721Holder, TestHelper {
         // Minting first half of second phase cap with USDT.
 
         params.quantity = (cap - initialCap) / 2;
-        params.costSingle = costSingleUSDT;
+        params.cost = params.quantity * costSingleUSDT;
         params.token = _USDT;
         params.errorSelector = 0x0;
 
@@ -363,7 +373,7 @@ contract DynamisTest is ERC721Holder, TestHelper {
         // Minting second half of second phase cap with ETH.
 
         params.quantity = (cap - initialCap) / 2;
-        params.costSingle = costSingleETH;
+        params.cost = params.quantity * costSingleETH;
         params.token = _ETH;
         params.errorSelector = 0x0;
 
@@ -372,19 +382,17 @@ contract DynamisTest is ERC721Holder, TestHelper {
         // Minting a few more times to confirm revert on second phase.
 
         params.quantity = 1;
-        params.costSingle = costSingleUSDT;
+        params.cost = params.quantity * costSingleUSDT;
         params.token = _USDT;
         params.errorSelector = BaseV2Errors.ExceededCap.selector;
 
         _mint(params);
 
         params.quantity = cap;
-        params.costSingle = costSingleETH;
+        params.cost = params.quantity * costSingleETH;
         params.token = _ETH;
         params.errorSelector = BaseV2Errors.ExceededCap.selector;
 
         _mint(params);
     }
-
-    function test_Vesting() external {}
 }
