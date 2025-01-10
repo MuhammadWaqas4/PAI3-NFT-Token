@@ -25,7 +25,7 @@ async function main() {
     const rewardPerSeconds = process.env.REWARD_PER_SECONDS.split(" ");
     const baseCostSingles = process.env.BASE_COST_SINGLES.split(" ");
     const pai3Address = process.env.PAI3_ADDRESS;
-    const feeWalletAddress = process.env.FEE_WALLET_ADDRESS;
+    const treasuryWalletAddress = process.env.TREASURY_WALLET_ADDRESS;
     const rewardWalletAddress = process.env.REWARD_WALLET_ADDRESS;
     const signerAddress = process.env.SIGNER_ADDRESS;
     const baseURIs = process.env.BASE_URIS.split(" ");
@@ -43,7 +43,7 @@ async function main() {
         rewardPerSecond: "",
         baseCostSingle: "",
         pai3: pai3Address,
-        feeWallet: feeWalletAddress,
+        treasuryWallet: treasuryWalletAddress,
         rewardWallet: rewardWalletAddress,
         signer: signerAddress,
         baseURI: "",

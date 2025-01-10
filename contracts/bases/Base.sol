@@ -48,7 +48,7 @@ abstract contract Base is Ownable2Step, ERC721A, BaseErrors, IBase {
     IERC20 public immutable PAI3;
 
     /// @inheritdoc IBase
-    address public immutable FEE_WALLET;
+    address public immutable TREASURY_WALLET;
 
     /// @inheritdoc IBase
     address public immutable REWARD_WALLET;
@@ -86,7 +86,7 @@ abstract contract Base is Ownable2Step, ERC721A, BaseErrors, IBase {
         }
 
         if (
-            params_.feeWallet == address(0) ||
+            params_.treasuryWallet == address(0) ||
             params_.rewardWallet == address(0)
         ) {
             _revert(InvalidAddress.selector);
@@ -108,7 +108,7 @@ abstract contract Base is Ownable2Step, ERC721A, BaseErrors, IBase {
         BASE_COST_SINGLE = params_.baseCostSingle;
 
         PAI3 = params_.pai3;
-        FEE_WALLET = params_.feeWallet;
+        TREASURY_WALLET = params_.treasuryWallet;
         REWARD_WALLET = params_.rewardWallet;
 
         _updateSigner(params_.signer);
@@ -147,7 +147,7 @@ abstract contract Base is Ownable2Step, ERC721A, BaseErrors, IBase {
             signature
         );
 
-        payable(FEE_WALLET).sendValue(cost);
+        payable(TREASURY_WALLET).sendValue(cost);
 
         if (msg.value > cost) {
             payable(msg.sender).sendValue(msg.value - cost);
@@ -178,7 +178,7 @@ abstract contract Base is Ownable2Step, ERC721A, BaseErrors, IBase {
             signature
         );
 
-        token.safeTransferFrom(msg.sender, FEE_WALLET, cost);
+        token.safeTransferFrom(msg.sender, TREASURY_WALLET, cost);
 
         _safeMint(msg.sender, quantity);
     }

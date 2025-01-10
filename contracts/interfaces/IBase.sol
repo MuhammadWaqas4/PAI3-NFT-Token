@@ -17,46 +17,42 @@ interface IBase is IERC721A {
     /* ========== TYPES ========== */
 
     struct BaseParams {
-        /// @custom:member owner Address of the contract owner.
+        /// @custom:member Address of the contract owner.
         address owner;
-        /// @custom:member name Token collection name.
+        /// @custom:member Token collection name.
         string name;
-        /// @custom:member symbol Token collection symbol.
+        /// @custom:member Token collection symbol.
         string symbol;
-        /// @custom:member rewardDuration Reward duration in seconds.
+        /// @custom:member Reward duration in seconds.
         uint64 rewardDuration;
-        /// @custom:member rewardPerSecond Reward generated per second.
+        /// @custom:member Reward generated per second.
         uint256 rewardPerSecond;
-        /// @custom:member baseCostSingle Base cost for a single token.
+        /// @custom:member Base cost for a single token.
         uint256 baseCostSingle;
-        /// @custom:member pai3 Address of the PAI3 token.
+        /// @custom:member Address of the PAI3 token.
         IERC20 pai3;
-        /// @custom:member feeWallet Address of the fee wallet.
-        address feeWallet;
-        /// @custom:member rewardWallet Address of the reward wallet.
+        /// @custom:member Address of the treasury wallet.
+        address treasuryWallet;
+        /// @custom:member Address of the reward wallet.
         address rewardWallet;
-        /// @custom:member signer Address of the signature signer.
+        /// @custom:member Address of the signature signer.
         address signer;
-        /// @custom:member baseURI Base URI for computing the tokenURI.
+        /// @custom:member Base URI for computing the tokenURI.
         string baseURI;
-        /// @custom:member tokens Addresses of the tokens to register as payment
-        /// tokens.
+        /// @custom:member Addresses of the payment tokens.
         IERC20[] tokens;
-        /// @custom:member priceFeeds Addresses of the price feeds.
+        /// @custom:member Addresses of the price feeds.
         AggregatorV3Interface[] priceFeeds;
     }
 
     struct Record {
-        /// @custom:member startTimestamp Timestamp at which a token was minted.
+        /// @custom:member Timestamp at which a token was minted.
         uint64 startTimestamp;
-        /// @custom:member vestingEndTimestamp Timestamp after which vesting
-        /// will end.
+        /// @custom:member Timestamp after which vesting will end.
         uint64 vestingEndTimestamp;
-        /// @custom:member rewardingEndTimestamp Timestamp after whichreward
-        /// generation will stop.
+        /// @custom:member Timestamp after which reward generation will stop.
         uint64 rewardingEndTimestamp;
-        /// @custom:member lastInteractedTimestamp Timestamp at which a
-        /// transfer, if applicable, was performed on this token.
+        /// @custom:member Timestamp at which a transfer was performed.
         uint64 lastInteractedTimestamp;
     }
 
@@ -193,9 +189,9 @@ interface IBase is IERC721A {
     function PAI3() external view returns (IERC20);
 
     /**
-     * @notice Address of the fee wallet.
+     * @notice Address of the treasury wallet.
      */
-    function FEE_WALLET() external view returns (address);
+    function TREASURY_WALLET() external view returns (address);
 
     /**
      * @notice Address of the reward wallet.
