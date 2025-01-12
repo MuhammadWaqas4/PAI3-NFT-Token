@@ -391,7 +391,7 @@ abstract contract Base is Ownable2Step, ERC721A, BaseErrors, IBase {
      * @dev Overridden to add `extraData` and populate {_records}.
      */
     function _mint(address to, uint256 quantity) internal virtual override {
-        uint256 startTokenId = _startTokenId();
+        uint256 startTokenId = _nextTokenId();
 
         super._mint(to, quantity);
 
