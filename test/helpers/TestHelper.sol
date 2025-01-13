@@ -18,6 +18,7 @@ contract TestHelper is Test {
     /* ========== ENVIRONMENT VARIABLES ========== */
 
     address public secondary;
+    address public tertiary;
 
     uint256 public signerPrivateKey;
     uint256 public secondarySignerPrivateKey;
@@ -37,6 +38,8 @@ contract TestHelper is Test {
     address public treasuryWallet;
     address public rewardWallet;
     address public signer;
+    address public secondarySigner;
+
     string public baseURI;
 
     /* ========== TYPES ========== */
@@ -56,6 +59,9 @@ contract TestHelper is Test {
 
     constructor() {
         secondary = address(0xAAA);
+        vm.label(secondary, "secondary");
+        tertiary = address(0xBBB);
+        vm.label(tertiary, "tertiary");
 
         signerPrivateKey = 100;
         secondarySignerPrivateKey = 200;
@@ -78,10 +84,17 @@ contract TestHelper is Test {
             rewardDurations.push(uint64(tempRewardDurations[i]));
         }
 
-        owner = address(0xBBB);
-        treasuryWallet = address(0xCCC);
-        rewardWallet = address(0xDDD);
+        owner = address(0xCCC);
+        vm.label(owner, "owner");
+        treasuryWallet = address(0xDDD);
+        vm.label(treasuryWallet, "treasuryWallet");
+        rewardWallet = address(0xEEE);
+        vm.label(rewardWallet, "rewardWallet");
         signer = vm.addr(signerPrivateKey);
+        vm.label(signer, "signer");
+        secondarySigner = vm.addr(secondarySignerPrivateKey);
+        vm.label(secondarySigner, "secondarySigner");
+
         baseURI = "ipfs://";
     }
 

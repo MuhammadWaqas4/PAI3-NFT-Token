@@ -11,28 +11,28 @@ async function main() {
 
     // Deployment variables.
     const deployments = [
-        // 0, // Dynamis
-        // 1, // Ethos
+        0, // Dynamis
+        1, // Ethos
         2, // Mitos
         3, // Osmos
         4 // Seismos
     ];
 
     const ownerAddress = process.env.OWNER_ADDRESS;
-    const names = process.env.NAMES.split(" ");
-    const symbols = process.env.SYMBOLS.split(" ");
-    const rewardDurations = process.env.REWARD_DURATIONS.split(" ");
-    const rewardPerSeconds = process.env.REWARD_PER_SECONDS.split(" ");
-    const baseCostSingles = process.env.BASE_COST_SINGLES.split(" ");
+    const names = process.env.NAMES.split("|");
+    const symbols = process.env.SYMBOLS.split("|");
+    const rewardDurations = process.env.REWARD_DURATIONS.split("|");
+    const rewardPerSeconds = process.env.REWARD_PER_SECONDS.split("|");
+    const baseCostSingles = process.env.BASE_COST_SINGLES.split("|");
     const pai3Address = process.env.PAI3_ADDRESS;
     const treasuryWalletAddress = process.env.TREASURY_WALLET_ADDRESS;
     const rewardWalletAddress = process.env.REWARD_WALLET_ADDRESS;
     const signerAddress = process.env.SIGNER_ADDRESS;
-    const baseURIs = process.env.BASE_URIS.split(" ");
-    const tokenAddresses = process.env.TOKEN_ADDRESSES.split(" ");
-    const priceFeedAddresses = process.env.PRICE_FEED_ADDRESSES.split(" ");
+    const baseURIs = process.env.BASE_URIS.split("|");
+    const tokenAddresses = process.env.TOKEN_ADDRESSES.split("|");
+    const priceFeedAddresses = process.env.PRICE_FEED_ADDRESSES.split("|");
     const initialCap = process.env.INITIAL_CAP;
-    const caps = process.env.CAPS.split(" ");
+    const caps = process.env.CAPS.split("|");
 
     // Common deployment variables.
     const params = {
