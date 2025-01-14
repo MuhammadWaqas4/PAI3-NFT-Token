@@ -30,7 +30,7 @@ abstract contract Base is Ownable2Step, ERC721A, BaseErrors, IBase {
     using ECDSA for bytes32;
     using MessageHashUtils for bytes32;
 
-    /* ========== STATE VARIABLES ========== */
+    /* ========================== STATE VARIABLES ========================== */
 
     /// @inheritdoc IBase
     uint64 public constant VESTING_DURATION = 31_536_000 seconds;
@@ -68,7 +68,7 @@ abstract contract Base is Ownable2Step, ERC721A, BaseErrors, IBase {
     /// @inheritdoc IBase
     mapping(address account => uint256 due) public dues;
 
-    /* ========== CONSTRUCTOR ========== */
+    /* ========================== CONSTRUCTOR ========================== */
 
     /**
      * @dev Constructor. Assigns ownership and initializes variables.
@@ -119,7 +119,7 @@ abstract contract Base is Ownable2Step, ERC721A, BaseErrors, IBase {
         }
     }
 
-    /* ========== FUNCTIONS ========== */
+    /* ========================== FUNCTIONS ========================== */
 
     /**
      * @inheritdoc IBase

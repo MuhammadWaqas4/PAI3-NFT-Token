@@ -23,7 +23,7 @@ abstract contract BaseV1 is BaseV1Errors, IBaseV1, Base {
     using SafeERC20 for IERC20;
     using Address for address payable;
 
-    /* ========== STATE VARIABLES ========== */
+    /* ========================== STATE VARIABLES ========================== */
 
     /// @dev One year time in seconds.
     uint256 private constant _ONE_YEAR_TIME = 31_536_000 seconds;
@@ -31,7 +31,7 @@ abstract contract BaseV1 is BaseV1Errors, IBaseV1, Base {
     /// @dev Cap on the number of minted tokens.
     uint256 private immutable _CAP;
 
-    /* ========== CONSTRUCTOR ========== */
+    /* ========================== CONSTRUCTOR ========================== */
 
     /**
      * @dev Constructor. Initializes parent contract.
@@ -46,7 +46,7 @@ abstract contract BaseV1 is BaseV1Errors, IBaseV1, Base {
         _CAP = cap_;
     }
 
-    /* ========== FUNCTIONS ========== */
+    /* ========================== FUNCTIONS ========================== */
 
     /**
      * @inheritdoc IBaseV1

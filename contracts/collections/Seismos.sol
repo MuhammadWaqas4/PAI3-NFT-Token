@@ -10,7 +10,7 @@ import { BaseAlt } from "../bases/BaseAlt.sol";
  * @notice Seismos NFT collection.
  */
 contract Seismos is BaseAlt {
-    /* ========== CONSTRUCTOR ========== */
+    /* ========================== CONSTRUCTOR ========================== */
 
     /**
      * @dev Constructor. Initializes parent contract.

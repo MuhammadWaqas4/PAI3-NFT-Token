@@ -12,14 +12,14 @@ import { IBase } from "./IBase.sol";
  * @notice Base NFT collection version 2.
  */
 interface IBaseV2 is IBase {
-    /* ========== TYPES ========== */
+    /* ========================== TYPES ========================== */
 
     enum Phase {
         FIRST,
         SECOND
     }
 
-    /* ========== FUNCTIONS ========== */
+    /* ========================== FUNCTIONS ========================== */
 
     /**
      * @notice Bumps the `phase` after the first `phase` has ended and changes

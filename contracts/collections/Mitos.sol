@@ -14,7 +14,7 @@ import { BaseV1 } from "../bases/BaseV1.sol";
  * @notice Mitos NFT collection.
  */
 contract Mitos is BaseV1 {
-    /* ========== CONSTRUCTOR ========== */
+    /* ========================== CONSTRUCTOR ========================== */
 
     /**
      * @dev Constructor. Initializes parent contract.

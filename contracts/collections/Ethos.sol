@@ -14,7 +14,7 @@ import { BaseV1 } from "../bases/BaseV1.sol";
  * @notice Ethos NFT collection.
  */
 contract Ethos is BaseV1 {
-    /* ========== CONSTRUCTOR ========== */
+    /* ========================== CONSTRUCTOR ========================== */
 
     /**
      * @dev Constructor. Initializes parent contract.

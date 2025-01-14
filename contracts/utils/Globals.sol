@@ -4,12 +4,12 @@ pragma solidity 0.8.28;
 
 import { IERC20 } from "@openzeppelin/contracts/token/ERC20/IERC20.sol";
 
-/* ========== FREE VARIABLES ========== */
+/* ========================== FREE VARIABLES ========================== */
 
 /// @dev Arbitrary checksummed address to signify ETH.
 IERC20 constant _ETH = IERC20(0xEeeeeEeeeEeEeeEeEeEeeEEEeeeeEeeeeeeeEEeE);
 
-/* ========== FREE FUNCTIONS ========== */
+/* ========================== FREE FUNCTIONS ========================== */
 
 /**
  * @dev For more efficient reverts.

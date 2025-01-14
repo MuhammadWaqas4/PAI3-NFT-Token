@@ -14,7 +14,7 @@ import { IERC721A } from "erc721a/contracts/IERC721A.sol";
  * @notice Base NFT collection interface.
  */
 interface IBase is IERC721A {
-    /* ========== TYPES ========== */
+    /* ========================== TYPES ========================== */
 
     struct BaseParams {
         /// @custom:member Address of the contract owner.
@@ -56,7 +56,7 @@ interface IBase is IERC721A {
         uint64 lastInteractedTimestamp;
     }
 
-    /* ========== EVENTS ========== */
+    /* ========================== EVENTS ========================== */
 
     /**
      * @dev Emitted when `quantity` of `tokens` is minted by `minter`.
@@ -100,7 +100,7 @@ interface IBase is IERC721A {
         AggregatorV3Interface oldPriceFeed
     );
 
-    /* ========== FUNCTIONS ========== */
+    /* ========================== FUNCTIONS ========================== */
 
     /**
      * @notice Mints `quantity` of `tokens` and transfers them to the `caller`.

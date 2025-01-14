@@ -10,7 +10,7 @@ import { IERC721 } from "@openzeppelin/contracts/token/ERC721/IERC721.sol";
  * @notice BaseAlt NFT collection interface.
  */
 interface IBaseAlt is IERC721 {
-    /* ========== TYPES ========== */
+    /* ========================== TYPES ========================== */
 
     struct BaseAltParams {
         /// @custom:member owner Address of the contract owner.
@@ -23,7 +23,7 @@ interface IBaseAlt is IERC721 {
         string baseURI;
     }
 
-    /* ========== EVENTS ========== */
+    /* ========================== EVENTS ========================== */
 
     /**
      * @dev Emitted when `token` is minted by `minter`.
@@ -36,7 +36,7 @@ interface IBaseAlt is IERC721 {
      */
     event SetBaseURI(string newBaseURI, string oldBaseURI);
 
-    /* ========== FUNCTIONS ========== */
+    /* ========================== FUNCTIONS ========================== */
 
     /**
      * @notice Mints `token` and transfers it to the `caller`.

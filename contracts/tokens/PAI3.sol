@@ -11,7 +11,7 @@ import { ERC20 } from "@openzeppelin/contracts/token/ERC20/ERC20.sol";
  * @notice PAI3 token.
  */
 contract PAI3 is Ownable, ERC20 {
-    /* ========== CONSTRUCTOR ========== */
+    /* ========================== CONSTRUCTOR ========================== */
 
     /**
      * @dev Constructor. Assigns ownership and mints total supply.

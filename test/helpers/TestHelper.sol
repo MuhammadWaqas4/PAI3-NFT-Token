@@ -15,7 +15,7 @@ contract TestHelper is Test {
     using SafeERC20 for IERC20;
     using MessageHashUtils for bytes32;
 
-    /* ========== ENVIRONMENT VARIABLES ========== */
+    /* ========================== STATE VARIABLES ========================== */
 
     address public secondary;
     address public tertiary;
@@ -39,10 +39,9 @@ contract TestHelper is Test {
     address public rewardWallet;
     address public signer;
     address public secondarySigner;
-
     string public baseURI;
 
-    /* ========== TYPES ========== */
+    /* ========================== TYPES ========================== */
 
     struct MintParams {
         uint256 deadline;
@@ -55,13 +54,11 @@ contract TestHelper is Test {
         bytes4 errorSelector;
     }
 
-    /* ========== CONSTRUCTOR ========== */
+    /* ========================== CONSTRUCTOR ========================== */
 
     constructor() {
         secondary = address(0xAAA);
-        vm.label(secondary, "secondary");
         tertiary = address(0xBBB);
-        vm.label(tertiary, "tertiary");
 
         signerPrivateKey = 100;
         secondarySignerPrivateKey = 200;
@@ -85,20 +82,22 @@ contract TestHelper is Test {
         }
 
         owner = address(0xCCC);
-        vm.label(owner, "owner");
         treasuryWallet = address(0xDDD);
-        vm.label(treasuryWallet, "treasuryWallet");
         rewardWallet = address(0xEEE);
-        vm.label(rewardWallet, "rewardWallet");
         signer = vm.addr(signerPrivateKey);
-        vm.label(signer, "signer");
         secondarySigner = vm.addr(secondarySignerPrivateKey);
-        vm.label(secondarySigner, "secondarySigner");
-
         baseURI = "ipfs://";
+
+        vm.label(secondary, "secondary");
+        vm.label(tertiary, "tertiary");
+        vm.label(owner, "owner");
+        vm.label(treasuryWallet, "treasuryWallet");
+        vm.label(rewardWallet, "rewardWallet");
+        vm.label(signer, "signer");
+        vm.label(secondarySigner, "secondarySigner");
     }
 
-    /* ========== HELPER FUNCTIONS ========== */
+    /* ========================== FUNCTIONS ========================== */
 
     function _mint(MintParams memory params) internal {
         uint256 startTokenId = params.collection.totalSupply() + 1;

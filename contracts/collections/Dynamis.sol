@@ -14,7 +14,7 @@ import { BaseV2 } from "../bases/BaseV2.sol";
  * @notice Dynamis NFT collection.
  */
 contract Dynamis is BaseV2 {
-    /* ========== CONSTRUCTOR ========== */
+    /* ========================== CONSTRUCTOR ========================== */
 
     /**
      * @dev Constructor. Initializes parent contract.

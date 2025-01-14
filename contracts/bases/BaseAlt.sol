@@ -20,7 +20,7 @@ import { _revert } from "../utils/Globals.sol";
 abstract contract BaseAlt is Ownable2Step, ERC721, BaseAltErrors, IBaseAlt {
     using Strings for string;
 
-    /* ========== STATE VARIABLES ========== */
+    /* ========================== STATE VARIABLES ========================== */
 
     /// @inheritdoc IBaseAlt
     uint256 public totalSupply;
@@ -28,7 +28,7 @@ abstract contract BaseAlt is Ownable2Step, ERC721, BaseAltErrors, IBaseAlt {
     /// @inheritdoc IBaseAlt
     string public baseURI;
 
-    /* ========== CONSTRUCTOR ========== */
+    /* ========================== CONSTRUCTOR ========================== */
 
     /**
      * @dev Constructor. Assigns ownership and initializes variables.
@@ -40,7 +40,7 @@ abstract contract BaseAlt is Ownable2Step, ERC721, BaseAltErrors, IBaseAlt {
         _setBaseURI(paramsAlt_.baseURI);
     }
 
-    /* ========== FUNCTIONS ========== */
+    /* ========================== FUNCTIONS ========================== */
 
     /**
      * @inheritdoc IBaseAlt

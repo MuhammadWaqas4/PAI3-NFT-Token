@@ -33,7 +33,7 @@ import { TestHelper } from "./helpers/TestHelper.sol";
 contract DynamisTest is ERC721Holder, TestHelper {
     using SafeERC20 for IERC20;
 
-    /* ========== STATE VARIABLES ========== */
+    /* ========================== STATE VARIABLES ========================== */
 
     IERC20 private _USDT;
 
@@ -58,7 +58,7 @@ contract DynamisTest is ERC721Holder, TestHelper {
     uint256 public costSingleETH;
     uint256 public costSingleUSDT;
 
-    /* ========== SETUP ========== */
+    /* ========================== SETUP ========================== */
 
     function setUp() external {
         vm.deal(address(this), totalSupply);
@@ -114,11 +114,11 @@ contract DynamisTest is ERC721Holder, TestHelper {
         costSingleUSDT = (baseCostSingle * 10 ** normalizationUSDT) / priceUSDT;
     }
 
-    /* ========== RECEIVE ========== */
+    /* ========================== RECEIVE ========================== */
 
     receive() external payable {}
 
-    /* ========== TEST FUNCTIONS ========== */
+    /* ========================== FUNCTIONS ========================== */
 
     function test_MintWithETH() external {
         // Mint params.

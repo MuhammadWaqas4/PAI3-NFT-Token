@@ -24,7 +24,7 @@ abstract contract BaseV2 is Pausable, BaseV2Errors, IBaseV2, Base {
     using SafeERC20 for IERC20;
     using Address for address payable;
 
-    /* ========== STATE VARIABLES ========== */
+    /* ========================== STATE VARIABLES ========================== */
 
     /// @dev One year time in seconds.
     uint256 private constant _ONE_YEAR_TIME = 31_536_000 seconds;
@@ -41,7 +41,7 @@ abstract contract BaseV2 is Pausable, BaseV2Errors, IBaseV2, Base {
     /// @inheritdoc IBaseV2
     Phase public phase;
 
-    /* ========== CONSTRUCTOR ========== */
+    /* ========================== CONSTRUCTOR ========================== */
 
     /**
      * @dev Constructor. Initializes parent contract.
@@ -70,7 +70,7 @@ abstract contract BaseV2 is Pausable, BaseV2Errors, IBaseV2, Base {
         _CAP = cap_;
     }
 
-    /* ========== FUNCTIONS ========== */
+    /* ========================== FUNCTIONS ========================== */
 
     /**
      * @inheritdoc IBaseV2
