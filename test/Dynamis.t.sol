@@ -408,7 +408,7 @@ contract DynamisTest is ERC721Holder, TestHelper {
             errorSelector: 0x0
         });
 
-        // Checking revert when caller to `transferFrom` is a contract.
+        // Checking revert with sender when calling with single quantity.
 
         params.caller = address(this);
         params.quantity = 1;
@@ -432,12 +432,14 @@ contract DynamisTest is ERC721Holder, TestHelper {
             new bytes(0x00)
         );
 
+        // Checking revert with sender when calling with more than one quantity.
+
         params.quantity = 10;
         params.cost = params.quantity * costSingleETH;
 
         _mint(params);
 
-        tokenId = dynamis.totalSupply() - 5;
+        tokenId = dynamis.totalSupply() / 2;
 
         vm.expectRevert(BaseErrors.BeforeVestingExpiry.selector);
         dynamis.transferFrom(address(this), secondary, tokenId);
@@ -453,7 +455,7 @@ contract DynamisTest is ERC721Holder, TestHelper {
             new bytes(0x00)
         );
 
-        // Checking revert when calling `transfrFrom` to a contract.
+        // Checking revert with to when calling with single quantity.
 
         params.caller = secondary;
         params.quantity = 1;
@@ -484,6 +486,8 @@ contract DynamisTest is ERC721Holder, TestHelper {
             new bytes(0x00)
         );
 
+        // Checking revert with to when calling with more than one quantity.
+
         params.quantity = 10;
         params.cost = params.quantity * costSingleETH;
 
@@ -492,7 +496,7 @@ contract DynamisTest is ERC721Holder, TestHelper {
 
         _mint(params);
 
-        tokenId = dynamis.totalSupply() - 5;
+        tokenId = dynamis.totalSupply();
 
         dynamis.approve(tertiary, tokenId);
 
@@ -512,9 +516,9 @@ contract DynamisTest is ERC721Holder, TestHelper {
             new bytes(0x00)
         );
 
-        // Checking revert and success at +/-{1/0} of vesting expiry time.
+        // Checking revert when calling before vesting expiry time.
 
-        tokenId = 12;
+        tokenId = dynamis.totalSupply() - params.quantity;
         uint256 startTimestamp = vm.getBlockTimestamp();
 
         vm.startPrank(secondary);
@@ -534,20 +538,21 @@ contract DynamisTest is ERC721Holder, TestHelper {
             new bytes(0x00)
         );
 
-        tokenId = 22;
-        console.log(dynamis.ownerOf(tokenId));
+        // Transferring at and after vesting expiry time.
+
+        tokenId = dynamis.totalSupply();
 
         vm.warp(startTimestamp + dynamis.VESTING_DURATION());
 
         dynamis.transferFrom(secondary, address(this), tokenId);
 
-        tokenId = 15;
+        tokenId = dynamis.totalSupply() - 1;
 
         vm.warp(startTimestamp + dynamis.VESTING_DURATION() + 1);
 
         dynamis.safeTransferFrom(secondary, address(this), tokenId);
 
-        tokenId = 18;
+        tokenId = dynamis.totalSupply() - 2;
 
         vm.warp(startTimestamp + (dynamis.VESTING_DURATION() * 2));
 
@@ -555,6 +560,52 @@ contract DynamisTest is ERC721Holder, TestHelper {
             secondary,
             address(this),
             tokenId,
+            new bytes(0x00)
+        );
+
+        // Transferring to another address.
+
+        tokenId = dynamis.totalSupply() - params.quantity;
+
+        dynamis.transferFrom(secondary, tertiary, tokenId);
+        dynamis.transferFrom(secondary, tertiary, tokenId + 1);
+        dynamis.transferFrom(secondary, tertiary, tokenId + 2);
+
+        // Checking revert when calling before vesting expiry time.
+
+        vm.startPrank(tertiary);
+        vm.warp(startTimestamp + dynamis.VESTING_DURATION() - 1);
+
+        vm.expectRevert(BaseErrors.BeforeVestingExpiry.selector);
+        dynamis.transferFrom(tertiary, address(this), tokenId);
+
+        vm.expectRevert(BaseErrors.BeforeVestingExpiry.selector);
+        dynamis.safeTransferFrom(tertiary, address(this), tokenId + 1);
+
+        vm.expectRevert(BaseErrors.BeforeVestingExpiry.selector);
+        dynamis.safeTransferFrom(
+            tertiary,
+            address(this),
+            tokenId + 2,
+            new bytes(0x00)
+        );
+
+        // Transferring at and after vesting expiry time.
+
+        vm.warp(startTimestamp + dynamis.VESTING_DURATION());
+
+        dynamis.transferFrom(tertiary, address(this), tokenId);
+
+        vm.warp(startTimestamp + dynamis.VESTING_DURATION() + 1);
+
+        dynamis.safeTransferFrom(tertiary, address(this), tokenId + 1);
+
+        vm.warp(startTimestamp + (dynamis.VESTING_DURATION() * 2));
+
+        dynamis.safeTransferFrom(
+            tertiary,
+            address(this),
+            tokenId + 2,
             new bytes(0x00)
         );
 
