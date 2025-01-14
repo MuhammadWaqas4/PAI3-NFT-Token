@@ -285,6 +285,8 @@ abstract contract Base is Ownable2Step, ERC721A, BaseErrors, IBase {
     ) public payable override(ERC721A, IERC721A) {
         Record memory record = _tokenRecords(tokenId);
 
+        super.transferFrom(from, to, tokenId);
+
         if (block.timestamp < record.vestingEndTimestamp) {
             uint32 callerSize;
             uint32 toSize;
@@ -298,8 +300,6 @@ abstract contract Base is Ownable2Step, ERC721A, BaseErrors, IBase {
                 _revert(BeforeVestingExpiry.selector);
             }
         }
-
-        super.transferFrom(from, to, tokenId);
 
         if (record.lastInteractedTimestamp < record.rewardingEndTimestamp) {
             uint24 index = uint24(tokenId);
