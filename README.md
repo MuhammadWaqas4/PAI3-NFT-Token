@@ -15,11 +15,25 @@ Open a terminal in your workspace and then type in the following commands to ful
 ### Setup environment variables
 
 Set the `URL_MAINNET`, `PRIVATE_KEY_MAINNET` and `BLOCK_EXPLORER_API_KEY_MAINNET` as environment variables for mainnet deployment on your preferred mainnet or similarly `URL_STAGING`, `PRIVATE_KEY_STAGING` and `BLOCK_EXPLORER_API_KEY_STAGING` for staging deployment on your preferred testnet.<br>
-You can achieve this by first creating a file named **.env** at the root of your project. Then copy the contents of the **.env.example** file into your newly created **.env** file. Finally fill in the variables for the aforementioned network.
+You can achieve this by first creating a file named **.env** at the root of your project. Then copy the contents of the **.env.example** file into your newly created **.env** file. Finally fill in the variables for the aforementioned networks.
 
-`URL`: This is the RPC URL of the given network. Most online resources can provide these for free.<br>
-`PRIVATE_KEY`: This is the private key of your account. ***Note: For staging deployment, please use a key that does NOT have any real funds associated with it.***<br>
-`BLOCK_EXPLORER_API_KEY`: This is the block explorer api key used for verification of contracts. You can get these from your account on the relevant block explorer of your chosen mainnet.
+`URL_...`: This is the RPC URL of the given network. Most online resources can provide these for free.<br>
+`PRIVATE_KEY_...`: This is the private key of your account<sup>1</sup>.<br>
+`BLOCK_EXPLORER_API_KEY_...`: This is the block explorer api key used for verification of contracts. You can get these from your account on the relevant block explorer of your chosen mainnet.
+
+<sup>1</sup> ***For staging deployment, please use a key that does NOT have any real funds associated with it.***
+
+### Configure API keys
+
+Set the etherscan api key in the **hardhat.config.js** file for the aforementioned networks.<br>
+You can achieve this my changing the network identifier for the `BLOCK_EXPLORER_API_KEY_MAINNET` and `BLOCK_EXPLORER_API_KEY_STAGING` in your **hardhat.config.js** under `module.exports` > `etherscan` > `apiKey`. For instance, when using mainnet ethereum for mainnet deployments and holesky testnet for staging deployments your `apiKey` object should look like this:
+
+```
+apiKey: {
+    holesky: process.env.BLOCK_EXPLORER_API_KEY_STAGING,
+    mainnet: process.env.BLOCK_EXPLORER_API_KEY_MAINNET
+}
+```
 
 ### Run the deployment script
 
@@ -30,3 +44,9 @@ For mainnet deployment, open a terminal at the root of your project then run the
 For staging deployment, run the following command. This will deploy and setup all relevant contracts on your chosen testnet:
 
 `npm run deploy-staging`
+
+## Test
+
+Open a terminal at the root of your project. Then run the following command:
+
+`npm run test`

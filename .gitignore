@@ -1,8 +1,7 @@
-node_modules/
 .vscode/
-.env
+node_modules/
 .DS_Store
-remappings.txt
+.env
 
 # Hardhat files
 /cache
