@@ -4,7 +4,7 @@ pragma solidity 0.8.28;
 
 /**
  * @title MockPriceFeed.
- * @author PAI3 Team.
+ * @author PAI3.
  * @notice Mock chainlink price feed.
  */
 contract MockPriceFeed {

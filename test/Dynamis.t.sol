@@ -20,10 +20,10 @@ import { PAI3 } from "contracts/tokens/PAI3.sol";
 
 import { _ETH } from "contracts/utils/Globals.sol";
 
-import { MockPriceFeed } from "./externals/MockPriceFeed.sol";
-import { MockToken } from "./externals/MockToken.sol";
-
 import { TestHelper } from "./helpers/TestHelper.sol";
+
+import { MockPriceFeed } from "./mocks/MockPriceFeed.sol";
+import { MockToken } from "./mocks/MockToken.sol";
 
 /**
  * @title DynamisTest.
