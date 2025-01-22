@@ -6,7 +6,8 @@ import { AggregatorV3Interface } from "@chainlink/contracts/src/v0.8/shared/inte
 
 import { Ownable2Step, Ownable } from "@openzeppelin/contracts/access/Ownable2Step.sol";
 import { IERC20Metadata } from "@openzeppelin/contracts/token/ERC20/extensions/IERC20Metadata.sol";
-import { SafeERC20, IERC20, Address } from "@openzeppelin/contracts/token/ERC20/utils/SafeERC20.sol";
+import { SafeERC20, IERC20 } from "@openzeppelin/contracts/token/ERC20/utils/SafeERC20.sol";
+import { Address } from "@openzeppelin/contracts/utils/Address.sol";
 import { Strings } from "@openzeppelin/contracts/utils/Strings.sol";
 import { ECDSA } from "@openzeppelin/contracts/utils/cryptography/ECDSA.sol";
 import { MessageHashUtils } from "@openzeppelin/contracts/utils/cryptography/MessageHashUtils.sol";
