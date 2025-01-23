@@ -8,23 +8,24 @@ import { Ownable2Step, Ownable } from "@openzeppelin/contracts/access/Ownable2St
 import { IERC20Metadata } from "@openzeppelin/contracts/token/ERC20/extensions/IERC20Metadata.sol";
 import { SafeERC20, IERC20 } from "@openzeppelin/contracts/token/ERC20/utils/SafeERC20.sol";
 import { Address } from "@openzeppelin/contracts/utils/Address.sol";
+import { Pausable } from "@openzeppelin/contracts/utils/Pausable.sol";
 import { Strings } from "@openzeppelin/contracts/utils/Strings.sol";
 import { ECDSA } from "@openzeppelin/contracts/utils/cryptography/ECDSA.sol";
 import { MessageHashUtils } from "@openzeppelin/contracts/utils/cryptography/MessageHashUtils.sol";
 
 import { ERC721A, IERC721A } from "erc721a/contracts/ERC721A.sol";
 
-import { BaseErrors } from "../interfaces/Errors.sol";
-import { IBase } from "../interfaces/IBase.sol";
+import { DynamisErrors } from "./interfaces/Errors.sol";
+import { IDynamis } from "./interfaces/IDynamis.sol";
 
-import { _ETH } from "../utils/Globals.sol";
+import { _ETH } from "./utils/Globals.sol";
 
 /**
- * @title Base.
+ * @title Dynamis.
  * @author PAI3 Team.
- * @notice Base NFT collection.
+ * @notice Dynamis NFT collection.
  */
-abstract contract Base is Ownable2Step, ERC721A, BaseErrors, IBase {
+contract Dynamis is Ownable2Step, Pausable, ERC721A, DynamisErrors, IDynamis {
     using SafeERC20 for IERC20;
     using Address for address payable;
     using Strings for string;
@@ -33,41 +34,56 @@ abstract contract Base is Ownable2Step, ERC721A, BaseErrors, IBase {
 
     /* ========================== STATE VARIABLES ========================== */
 
-    /// @inheritdoc IBase
+    /// @dev One year time in seconds.
+    uint256 private constant _ONE_YEAR_TIME = 31_536_000 seconds;
+
+    /// @inheritdoc IDynamis
     uint64 public constant VESTING_DURATION = 31_536_000 seconds;
 
-    /// @inheritdoc IBase
+    /// @dev Cap on the number of minted NFTs initially.
+    /// NOTE: Once this cap is reached further minting will be paused until the
+    /// next phase.
+    uint256 private immutable _INITIAL_CAP;
+
+    /// @dev Cap on the number of minted NFTs.
+    /// NOTE: This value is inclusive of {_INITIAL_CAP}.
+    uint256 private immutable _CAP;
+
+    /// @inheritdoc IDynamis
     uint64 public immutable REWARD_DURATION;
 
-    /// @inheritdoc IBase
+    /// @inheritdoc IDynamis
     uint256 public immutable REWARD_PER_SECOND;
 
-    /// @inheritdoc IBase
+    /// @inheritdoc IDynamis
     uint256 public immutable BASE_COST_SINGLE;
 
-    /// @inheritdoc IBase
+    /// @inheritdoc IDynamis
     IERC20 public immutable PAI3;
 
-    /// @inheritdoc IBase
+    /// @inheritdoc IDynamis
     address public immutable TREASURY_WALLET;
 
-    /// @inheritdoc IBase
+    /// @inheritdoc IDynamis
     address public immutable REWARD_WALLET;
 
-    /// @inheritdoc IBase
+    /// @inheritdoc IDynamis
     address public signer;
 
-    /// @inheritdoc IBase
+    /// @inheritdoc IDynamis
     string public baseURI;
 
-    /// @dev Time based `records` relevant to a packed index.
+    /// @inheritdoc IDynamis
+    Phase public phase;
+
+    /// @dev Time based `records` relevant to a packed `index`.
     mapping(uint24 index => Record record) private _records;
 
-    /// @inheritdoc IBase
-    mapping(IERC20 token => AggregatorV3Interface priceFeed) public priceFeeds;
-
-    /// @inheritdoc IBase
+    /// @inheritdoc IDynamis
     mapping(address account => uint256 due) public dues;
+
+    /// @inheritdoc IDynamis
+    mapping(IERC20 token => AggregatorV3Interface priceFeed) public priceFeeds;
 
     /* ========================== CONSTRUCTOR ========================== */
 
@@ -76,14 +92,16 @@ abstract contract Base is Ownable2Step, ERC721A, BaseErrors, IBase {
      * @param params_ Params necessary for contract deployment.
      */
     constructor(
-        BaseParams memory params_
+        DynamisParams memory params_
     ) Ownable(params_.owner) ERC721A(params_.name, params_.symbol) {
         if (
+            params_.initialCap == 0 ||
+            params_.cap == 0 ||
             params_.rewardDuration == 0 ||
             params_.rewardPerSecond == 0 ||
             params_.baseCostSingle == 0
         ) {
-            _revert(InvalidValue.selector);
+            _revert(InvalidAmount.selector);
         }
 
         if (
@@ -91,6 +109,14 @@ abstract contract Base is Ownable2Step, ERC721A, BaseErrors, IBase {
             params_.rewardWallet == address(0)
         ) {
             _revert(InvalidAddress.selector);
+        }
+
+        if (params_.initialCap >= params_.cap) {
+            _revert(InvalidInitialCap.selector);
+        }
+
+        if (params_.cap > type(uint24).max) {
+            _revert(InvalidCap.selector);
         }
 
         uint256 length = params_.tokens.length;
@@ -103,8 +129,10 @@ abstract contract Base is Ownable2Step, ERC721A, BaseErrors, IBase {
             _revert(InvalidArrayArity.selector);
         }
 
-        REWARD_DURATION = params_.rewardDuration;
+        _INITIAL_CAP = params_.initialCap;
+        _CAP = params_.cap;
 
+        REWARD_DURATION = params_.rewardDuration;
         REWARD_PER_SECOND = params_.rewardPerSecond;
         BASE_COST_SINGLE = params_.baseCostSingle;
 
@@ -123,7 +151,7 @@ abstract contract Base is Ownable2Step, ERC721A, BaseErrors, IBase {
     /* ========================== FUNCTIONS ========================== */
 
     /**
-     * @inheritdoc IBase
+     * @inheritdoc IDynamis
      */
     function mintWithETH(
         uint256 quantity,
@@ -158,7 +186,7 @@ abstract contract Base is Ownable2Step, ERC721A, BaseErrors, IBase {
     }
 
     /**
-     * @inheritdoc IBase
+     * @inheritdoc IDynamis
      */
     function mint(
         IERC20 token,
@@ -185,7 +213,7 @@ abstract contract Base is Ownable2Step, ERC721A, BaseErrors, IBase {
     }
 
     /**
-     * @inheritdoc IBase
+     * @inheritdoc IDynamis
      */
     function claim(uint256 tokenId) external {
         if (ownerOf(tokenId) != msg.sender) {
@@ -242,21 +270,21 @@ abstract contract Base is Ownable2Step, ERC721A, BaseErrors, IBase {
     }
 
     /**
-     * @inheritdoc IBase
+     * @inheritdoc IDynamis
      */
     function updateSigner(address newSigner) external onlyOwner {
         _updateSigner(newSigner);
     }
 
     /**
-     * @inheritdoc IBase
+     * @inheritdoc IDynamis
      */
     function setBaseURI(string memory newBaseURI) external onlyOwner {
         _setBaseURI(newBaseURI);
     }
 
     /**
-     * @inheritdoc IBase
+     * @inheritdoc IDynamis
      */
     function updatePriceFeed(
         IERC20 token,
@@ -266,7 +294,33 @@ abstract contract Base is Ownable2Step, ERC721A, BaseErrors, IBase {
     }
 
     /**
-     * @inheritdoc IBase
+     * @inheritdoc IDynamis
+     */
+    function bumpPhase() external onlyOwner {
+        if (phase != Phase.FIRST) {
+            _revert(AlreadyBumpedPhase.selector);
+        }
+
+        _unpause();
+        phase = Phase.SECOND;
+    }
+
+    /**
+     * @inheritdoc IDynamis
+     */
+    function pause() external onlyOwner {
+        _pause();
+    }
+
+    /**
+     * @inheritdoc IDynamis
+     */
+    function unpause() external onlyOwner {
+        _unpause();
+    }
+
+    /**
+     * @inheritdoc IDynamis
      */
     function tokenRecords(
         uint256 tokenId
@@ -329,20 +383,95 @@ abstract contract Base is Ownable2Step, ERC721A, BaseErrors, IBase {
     }
 
     /**
+     * @inheritdoc IDynamis
+     */
+    function cap() public view returns (uint256) {
+        return phase == Phase.FIRST ? _INITIAL_CAP : _CAP;
+    }
+
+    /**
      * @inheritdoc ERC721A
      * @dev Overridden to include this contracts `interfaceId`.
      * @param interfaceId Id of the required interface.
      */
     function supportsInterface(
         bytes4 interfaceId
-    ) public view virtual override(ERC721A, IERC721A) returns (bool) {
+    ) public view override(ERC721A, IERC721A) returns (bool) {
         return
-            interfaceId == type(IBase).interfaceId ||
+            interfaceId == type(IDynamis).interfaceId ||
             super.supportsInterface(interfaceId);
     }
 
     /**
+     * @inheritdoc ERC721A
+     * @dev Overridden to introduce {cap} to collection's {totalSupply} and to
+     * add extraData for book keeping.
+     */
+    function _mint(address to, uint256 quantity) internal override {
+        uint256 startTokenId = _nextTokenId();
+
+        super._mint(to, quantity);
+
+        uint256 maxSupply = cap();
+        uint256 supply = totalSupply();
+
+        if (supply > maxSupply) {
+            _revert(ExceededCap.selector);
+        }
+
+        if (supply == maxSupply && phase == Phase.FIRST) {
+            _pause();
+        }
+
+        uint24 startIndex = uint24(startTokenId);
+        uint64 currentTimestamp = uint64(block.timestamp);
+
+        _records[startIndex] = Record({
+            startTimestamp: currentTimestamp,
+            vestingEndTimestamp: currentTimestamp + VESTING_DURATION,
+            rewardingEndTimestamp: currentTimestamp + REWARD_DURATION,
+            lastInteractedTimestamp: currentTimestamp
+        });
+
+        _setExtraDataAt(startTokenId, startIndex);
+    }
+
+    /**
+     * @inheritdoc ERC721A
+     * @dev Overridden to return {baseURI}.
+     */
+    function _baseURI() internal view override returns (string memory) {
+        return baseURI;
+    }
+
+    /**
+     * @inheritdoc ERC721A
+     * @dev Overridden to create empty extraData when `from` or `to` is
+     * `address(0)` and to preserve `previousExtraData` when transferring.
+     */
+    function _extraData(
+        address from,
+        address to,
+        uint24 previousExtraData
+    ) internal pure override returns (uint24) {
+        if (from == address(0) || to == address(0)) {
+            return 0;
+        } else {
+            return previousExtraData;
+        }
+    }
+
+    /**
+     * @inheritdoc ERC721A
+     * @dev Overridden to change start tokenId to `1`.
+     */
+    function _startTokenId() internal pure override returns (uint256) {
+        return 1;
+    }
+
+    /**
      * @dev Implements {mint} logic.
+     * NOTE: Can only be called when unpaused.
      */
     function _processMint(
         IERC20 token,
@@ -350,7 +479,7 @@ abstract contract Base is Ownable2Step, ERC721A, BaseErrors, IBase {
         uint256 quantity,
         uint256 deadline,
         bytes memory signature
-    ) internal virtual returns (uint256) {
+    ) private whenNotPaused returns (uint256) {
         AggregatorV3Interface priceFeed = priceFeeds[token];
 
         if (address(priceFeed) == address(0)) {
@@ -385,61 +514,6 @@ abstract contract Base is Ownable2Step, ERC721A, BaseErrors, IBase {
         });
 
         return cost;
-    }
-
-    /**
-     * @inheritdoc ERC721A
-     * @dev Overridden to add `extraData` and populate {_records}.
-     */
-    function _mint(address to, uint256 quantity) internal virtual override {
-        uint256 startTokenId = _nextTokenId();
-
-        super._mint(to, quantity);
-
-        uint24 startIndex = uint24(startTokenId);
-        uint64 currentTimestamp = uint64(block.timestamp);
-
-        _records[startIndex] = Record({
-            startTimestamp: currentTimestamp,
-            vestingEndTimestamp: currentTimestamp + VESTING_DURATION,
-            rewardingEndTimestamp: currentTimestamp + REWARD_DURATION,
-            lastInteractedTimestamp: currentTimestamp
-        });
-
-        _setExtraDataAt(startTokenId, startIndex);
-    }
-
-    /**
-     * @inheritdoc ERC721A
-     * @dev Overridden to return {baseURI}.
-     */
-    function _baseURI() internal view override returns (string memory) {
-        return baseURI;
-    }
-
-    /**
-     * @inheritdoc ERC721A
-     * @dev Overridden to create empty `extraData` when minting or burning and
-     * to continue `previousExtraData` when transferring.
-     */
-    function _extraData(
-        address from,
-        address to,
-        uint24 previousExtraData
-    ) internal pure override returns (uint24) {
-        if (from == address(0) || to == address(0)) {
-            return 0;
-        } else {
-            return previousExtraData;
-        }
-    }
-
-    /**
-     * @inheritdoc ERC721A
-     * @dev Overridden to change {_startTokenId} to `1`.
-     */
-    function _startTokenId() internal pure override returns (uint256) {
-        return 1;
     }
 
     /**
@@ -481,24 +555,24 @@ abstract contract Base is Ownable2Step, ERC721A, BaseErrors, IBase {
      */
     function _updatePriceFeed(
         IERC20 token,
-        AggregatorV3Interface newPriceFeed
+        AggregatorV3Interface priceFeed
     ) private {
-        AggregatorV3Interface priceFeed = priceFeeds[token];
+        AggregatorV3Interface oldPriceFeed = priceFeeds[token];
 
         if (
             address(token) == address(0) ||
-            (address(priceFeed) == address(0) &&
-                address(newPriceFeed) == address(0))
+            (address(oldPriceFeed) == address(0) &&
+                address(priceFeed) == address(0))
         ) {
             _revert(InvalidAddress.selector);
         }
 
-        priceFeeds[token] = newPriceFeed;
+        priceFeeds[token] = priceFeed;
 
         emit UpdatePriceFeed({
             token: token,
-            newPriceFeed: newPriceFeed,
-            oldPriceFeed: priceFeed
+            newPriceFeed: priceFeed,
+            oldPriceFeed: oldPriceFeed
         });
     }
 

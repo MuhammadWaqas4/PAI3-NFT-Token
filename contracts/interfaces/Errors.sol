@@ -3,49 +3,72 @@
 pragma solidity 0.8.28;
 
 /**
- * @dev Errors for the Base contract.
+ * @dev Errors for the Dynamis contract.
  */
-interface BaseErrors {
+interface DynamisErrors {
     /**
-     * @dev Indicates a failure with the `deadline` if the `deadline` has been
+     * @dev Indicates a failure with the deadline if the deadline has been
      * crossed when a signature is verified.
      */
     error AfterSignatureDeadline();
 
     /**
-     * @dev Indicates a failure with the `caller` if the `caller` is not the
-     * `owner` of a `tokenId`.
+     * @dev Indicates a failure with the phase if the phase is being bumped
+     * again.
+     */
+    error AlreadyBumpedPhase();
+
+    /**
+     * @dev Indicates a failure with the expiry if the expiry has not been
+     * crossed when a transfer or approval is performed.
+     */
+    error BeforeVestingExpiry();
+
+    /**
+     * @dev Indicates a failure with the caller if the caller is not the owner
+     * of a tokenId.
      */
     error CallerNotOwner();
 
     /**
-     * @dev Indicates a failure with the `token` if the `token` is not
-     * registered as a payment token with a cooresponding `price feed`.
+     * @dev Indicates a failure with the total supply if the total supply
+     * exceeds the cap.
+     */
+    error ExceededCap();
+
+    /**
+     * @dev Indicates a failure with the token if the token is not registered as
+     * a payment token with a cooresponding price feed.
      */
     error IncorrectPaymentToken();
 
     /**
-     * @dev Indicates a failure with the `signature` if the `signature` recovers
-     * a different address than the signer.
+     * @dev Indicates a failure with the signature if the signature recovers a
+     * different address than the signer.
      */
     error IncorrectSignatureRecovery();
 
     /**
-     * @dev Indicates a failure with the `cost` if the `cost` calculated is
-     * below the `base cost single`.
+     * @dev Indicates a failure with the cost if the cost calculated is less
+     * than the base cost for a single token.
      */
     error InsufficientCost();
 
     /**
-     * @dev Indicates a failure with the `reward` if the `reward` is `0`.
+     * @dev Indicates a failure with the reward if the reward is `0`.
      */
     error InsufficientReward();
 
     /**
-     * @dev Indicates an error with the given argument `address`. For example,
+     * @dev Indicates an error with the given argument address. For example,
      * `address(0)`.
      */
     error InvalidAddress();
+
+    /**
+     * @dev Indicates an error with the given argument value. For example, `0`.
+     */
+    error InvalidAmount();
 
     /**
      * @dev Indicates an error with the given argument array's arity. For
@@ -66,89 +89,26 @@ interface BaseErrors {
     error InvalidAssignment();
 
     /**
-     * @dev Indicates an error with the given argument `payable value`. For
-     * example, `0`.
-     */
-    error InvalidPayableValue();
-
-    /**
-     * @dev Indicates an error with the given argument `string`. For example,
-     * `""`.
-     */
-    error InvalidString();
-
-    /**
-     * @dev Indicates an error with the given argument `value`. For example,
-     * `0`.
-     */
-    error InvalidValue();
-
-    /**
-     * @dev Indicates a failure with the `expiry` if the `expiry` has not been
-     * crossed when a `transfer` or `approval` is performed.
-     */
-    error BeforeVestingExpiry();
-}
-
-/**
- * @dev Errors for the BaseAlt contract.
- */
-interface BaseAltErrors {
-    /**
-     * @dev Indicates a failure with the `minter` if the `minter` already has a
-     * `balance` of `1`.
-     */
-    error AlreadyOwned();
-
-    /**
-     * @dev Indicates an error with the given argument's assignment. For
-     * example, `argument == stateVariable`.
-     */
-    error InvalidAssignment();
-
-    /**
-     * @dev Indicates an error with the given argument `string`. For example,
-     * `""`.
-     */
-    error InvalidString();
-}
-
-/**
- * @dev Errors for the BaseV1 contract.
- */
-interface BaseV1Errors {
-    /**
-     * @dev Indicates a failure with the `total supply` if the `total supply`
-     * exceeds the `cap`.
-     */
-    error ExceededCap();
-}
-
-/**
- * @dev Errors for the BaseV2 contract.
- */
-interface BaseV2Errors {
-    /**
-     * @dev Indicates a failure with the `phase` if the `phase` is being bumped
-     * again.
-     */
-    error AlreadyBumpedPhase();
-
-    /**
-     * @dev Indicates a failure with the `total supply` if the `total supply`
-     * exceeds the `cap`.
-     */
-    error ExceededCap();
-
-    /**
-     * @dev Indicates an error in the given argument `cap`. That is,
+     * @dev Indicates an error in the given argument cap. That is,
      * `cap > type(uint24).max`.
      */
     error InvalidCap();
 
     /**
-     * @dev Indicates an error in the given argument `initial cap`. That is,
+     * @dev Indicates an error in the given argument initial cap. That is,
      * `initialCap_ >= cap_`.
      */
     error InvalidInitialCap();
+
+    /**
+     * @dev Indicates an error with the given argument payable value. For
+     * example, `0`.
+     */
+    error InvalidPayableValue();
+
+    /**
+     * @dev Indicates an error with the given argument string. For example,
+     * `""`.
+     */
+    error InvalidString();
 }

@@ -11,14 +11,14 @@ import { SafeERC20, IERC20 } from "@openzeppelin/contracts/token/ERC20/utils/Saf
 import { ERC721Holder } from "@openzeppelin/contracts/token/ERC721/utils/ERC721Holder.sol";
 import { Pausable } from "@openzeppelin/contracts/utils/Pausable.sol";
 
-import { Dynamis } from "contracts/collections/Dynamis.sol";
-
-import { BaseErrors, BaseV2Errors } from "contracts/interfaces/Errors.sol";
-import { IBase } from "contracts/interfaces/IBase.sol";
+import { DynamisErrors } from "contracts/interfaces/Errors.sol";
+import { IDynamis } from "contracts/interfaces/IDynamis.sol";
 
 import { PAI3 } from "contracts/tokens/PAI3.sol";
 
 import { _ETH } from "contracts/utils/Globals.sol";
+
+import { Dynamis } from "contracts/Dynamis.sol";
 
 import { TestHelper } from "./helpers/TestHelper.sol";
 
@@ -90,10 +90,12 @@ contract DynamisTest is ERC721Holder, TestHelper {
         priceFeeds = [priceFeedETH, priceFeedUSDT];
 
         dynamis = new Dynamis(
-            IBase.BaseParams({
+            IDynamis.DynamisParams({
                 owner: owner,
                 name: name,
                 symbol: symbol,
+                initialCap: initialCap,
+                cap: cap,
                 rewardDuration: rewardDuration,
                 rewardPerSecond: rewardPerSecond,
                 baseCostSingle: baseCostSingle,
@@ -104,9 +106,7 @@ contract DynamisTest is ERC721Holder, TestHelper {
                 baseURI: baseURI,
                 tokens: tokens,
                 priceFeeds: priceFeeds
-            }),
-            initialCap,
-            cap
+            })
         );
 
         deadline = block.timestamp + 1;
@@ -305,14 +305,14 @@ contract DynamisTest is ERC721Holder, TestHelper {
         params.quantity = 2;
         params.cost = params.quantity * costSingleETH;
         params.token = _ETH;
-        params.errorSelector = BaseV2Errors.ExceededCap.selector;
+        params.errorSelector = DynamisErrors.ExceededCap.selector;
 
         _mintHelper(params);
 
         params.quantity = initialCap;
         params.cost = params.quantity * costSingleUSDT;
         params.token = _USDT;
-        params.errorSelector = BaseV2Errors.ExceededCap.selector;
+        params.errorSelector = DynamisErrors.ExceededCap.selector;
 
         _mintHelper(params);
 
@@ -382,14 +382,14 @@ contract DynamisTest is ERC721Holder, TestHelper {
         params.quantity = 1;
         params.cost = params.quantity * costSingleUSDT;
         params.token = _USDT;
-        params.errorSelector = BaseV2Errors.ExceededCap.selector;
+        params.errorSelector = DynamisErrors.ExceededCap.selector;
 
         _mintHelper(params);
 
         params.quantity = cap;
         params.cost = params.quantity * costSingleETH;
         params.token = _ETH;
-        params.errorSelector = BaseV2Errors.ExceededCap.selector;
+        params.errorSelector = DynamisErrors.ExceededCap.selector;
 
         _mintHelper(params);
     }
@@ -418,13 +418,13 @@ contract DynamisTest is ERC721Holder, TestHelper {
 
         uint256 tokenId = dynamis.totalSupply();
 
-        vm.expectRevert(BaseErrors.BeforeVestingExpiry.selector);
+        vm.expectRevert(DynamisErrors.BeforeVestingExpiry.selector);
         dynamis.transferFrom(address(this), secondary, tokenId);
 
-        vm.expectRevert(BaseErrors.BeforeVestingExpiry.selector);
+        vm.expectRevert(DynamisErrors.BeforeVestingExpiry.selector);
         dynamis.safeTransferFrom(address(this), secondary, tokenId);
 
-        vm.expectRevert(BaseErrors.BeforeVestingExpiry.selector);
+        vm.expectRevert(DynamisErrors.BeforeVestingExpiry.selector);
         dynamis.safeTransferFrom(
             address(this),
             secondary,
@@ -441,13 +441,13 @@ contract DynamisTest is ERC721Holder, TestHelper {
 
         tokenId = dynamis.totalSupply() / 2;
 
-        vm.expectRevert(BaseErrors.BeforeVestingExpiry.selector);
+        vm.expectRevert(DynamisErrors.BeforeVestingExpiry.selector);
         dynamis.transferFrom(address(this), secondary, tokenId);
 
-        vm.expectRevert(BaseErrors.BeforeVestingExpiry.selector);
+        vm.expectRevert(DynamisErrors.BeforeVestingExpiry.selector);
         dynamis.safeTransferFrom(address(this), secondary, tokenId);
 
-        vm.expectRevert(BaseErrors.BeforeVestingExpiry.selector);
+        vm.expectRevert(DynamisErrors.BeforeVestingExpiry.selector);
         dynamis.safeTransferFrom(
             address(this),
             secondary,
@@ -472,13 +472,13 @@ contract DynamisTest is ERC721Holder, TestHelper {
 
         vm.startPrank(tertiary);
 
-        vm.expectRevert(BaseErrors.BeforeVestingExpiry.selector);
+        vm.expectRevert(DynamisErrors.BeforeVestingExpiry.selector);
         dynamis.transferFrom(secondary, address(this), tokenId);
 
-        vm.expectRevert(BaseErrors.BeforeVestingExpiry.selector);
+        vm.expectRevert(DynamisErrors.BeforeVestingExpiry.selector);
         dynamis.safeTransferFrom(secondary, address(this), tokenId);
 
-        vm.expectRevert(BaseErrors.BeforeVestingExpiry.selector);
+        vm.expectRevert(DynamisErrors.BeforeVestingExpiry.selector);
         dynamis.safeTransferFrom(
             secondary,
             address(this),
@@ -502,13 +502,13 @@ contract DynamisTest is ERC721Holder, TestHelper {
 
         vm.startPrank(tertiary);
 
-        vm.expectRevert(BaseErrors.BeforeVestingExpiry.selector);
+        vm.expectRevert(DynamisErrors.BeforeVestingExpiry.selector);
         dynamis.transferFrom(secondary, address(this), tokenId);
 
-        vm.expectRevert(BaseErrors.BeforeVestingExpiry.selector);
+        vm.expectRevert(DynamisErrors.BeforeVestingExpiry.selector);
         dynamis.safeTransferFrom(secondary, address(this), tokenId);
 
-        vm.expectRevert(BaseErrors.BeforeVestingExpiry.selector);
+        vm.expectRevert(DynamisErrors.BeforeVestingExpiry.selector);
         dynamis.safeTransferFrom(
             secondary,
             address(this),
@@ -524,13 +524,13 @@ contract DynamisTest is ERC721Holder, TestHelper {
         vm.startPrank(secondary);
         vm.warp(startTimestamp + dynamis.VESTING_DURATION() - 1);
 
-        vm.expectRevert(BaseErrors.BeforeVestingExpiry.selector);
+        vm.expectRevert(DynamisErrors.BeforeVestingExpiry.selector);
         dynamis.transferFrom(secondary, address(this), tokenId);
 
-        vm.expectRevert(BaseErrors.BeforeVestingExpiry.selector);
+        vm.expectRevert(DynamisErrors.BeforeVestingExpiry.selector);
         dynamis.safeTransferFrom(secondary, address(this), tokenId);
 
-        vm.expectRevert(BaseErrors.BeforeVestingExpiry.selector);
+        vm.expectRevert(DynamisErrors.BeforeVestingExpiry.selector);
         dynamis.safeTransferFrom(
             secondary,
             address(this),
@@ -576,13 +576,13 @@ contract DynamisTest is ERC721Holder, TestHelper {
         vm.startPrank(tertiary);
         vm.warp(startTimestamp + dynamis.VESTING_DURATION() - 1);
 
-        vm.expectRevert(BaseErrors.BeforeVestingExpiry.selector);
+        vm.expectRevert(DynamisErrors.BeforeVestingExpiry.selector);
         dynamis.transferFrom(tertiary, address(this), tokenId);
 
-        vm.expectRevert(BaseErrors.BeforeVestingExpiry.selector);
+        vm.expectRevert(DynamisErrors.BeforeVestingExpiry.selector);
         dynamis.safeTransferFrom(tertiary, address(this), tokenId + 1);
 
-        vm.expectRevert(BaseErrors.BeforeVestingExpiry.selector);
+        vm.expectRevert(DynamisErrors.BeforeVestingExpiry.selector);
         dynamis.safeTransferFrom(
             tertiary,
             address(this),

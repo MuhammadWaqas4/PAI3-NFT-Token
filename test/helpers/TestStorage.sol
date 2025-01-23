@@ -6,7 +6,7 @@ import "forge-std/Test.sol";
 
 import { IERC20 } from "@openzeppelin/contracts/token/ERC20/IERC20.sol";
 
-import { IBase } from "contracts/interfaces/IBase.sol";
+import { IDynamis } from "contracts/interfaces/IDynamis.sol";
 
 abstract contract TestStorage is Test {
     /* ========================== STATE VARIABLES ========================== */
@@ -44,7 +44,7 @@ abstract contract TestStorage is Test {
         uint256 cost;
         address caller;
         IERC20 token;
-        IBase collection;
+        IDynamis collection;
         bytes4 errorSelector;
     }
 
