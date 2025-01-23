@@ -14,25 +14,26 @@ abstract contract TestStorage is Test {
     address public secondary;
     address public tertiary;
 
-    uint256 public signerPrivateKey;
     uint256 public secondarySignerPrivateKey;
+    address public secondarySigner;
 
     uint256 public totalSupply;
-    uint256 public initialCap;
-
-    string[] public names;
-    string[] public symbols;
-    uint256[] public rewardPerSeconds;
-    uint256[] public baseCostSingles;
-    uint256[] public caps;
-
-    uint64[] public rewardDurations;
 
     address public owner;
+
+    string public name;
+    string public symbol;
+
+    uint256 public initialCap;
+    uint256 public cap;
+    uint64 public rewardDuration;
+    uint256 public rewardPerSecond;
+    uint256 public baseCostSingle;
+
     address public treasuryWallet;
     address public rewardWallet;
+    uint256 public signerPrivateKey;
     address public signer;
-    address public secondarySigner;
     string public baseURI;
 
     /* ========================== TYPES ========================== */
@@ -54,32 +55,26 @@ abstract contract TestStorage is Test {
         secondary = address(0xAAA);
         tertiary = address(0xBBB);
 
-        signerPrivateKey = 100;
         secondarySignerPrivateKey = 200;
+        secondarySigner = vm.addr(secondarySignerPrivateKey);
 
         totalSupply = vm.envUint("TOTAL_SUPPLY");
-        initialCap = vm.envUint("INITIAL_CAP");
-
-        names = vm.envString("NAMES", "|");
-        symbols = vm.envString("SYMBOLS", "|");
-        rewardPerSeconds = vm.envUint("REWARD_PER_SECONDS", "|");
-        baseCostSingles = vm.envUint("BASE_COST_SINGLES", "|");
-        caps = vm.envUint("CAPS", "|");
-
-        uint256[] memory tempRewardDurations = vm.envUint(
-            "REWARD_DURATIONS",
-            "|"
-        );
-
-        for (uint256 i = 0; i < tempRewardDurations.length; i++) {
-            rewardDurations.push(uint64(tempRewardDurations[i]));
-        }
 
         owner = address(0xCCC);
+
+        name = vm.envString("NAME");
+        symbol = vm.envString("SYMBOL");
+
+        initialCap = vm.envUint("INITIAL_CAP");
+        cap = vm.envUint("CAP");
+        rewardDuration = uint64(vm.envUint("REWARD_DURATION"));
+        rewardPerSecond = vm.envUint("REWARD_PER_SECOND");
+        baseCostSingle = vm.envUint("BASE_COST_SINGLE");
+
         treasuryWallet = address(0xDDD);
         rewardWallet = address(0xEEE);
+        signerPrivateKey = 100;
         signer = vm.addr(signerPrivateKey);
-        secondarySigner = vm.addr(secondarySignerPrivateKey);
         baseURI = "ipfs://";
 
         vm.label(secondary, "secondary");

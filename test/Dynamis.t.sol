@@ -37,13 +37,6 @@ contract DynamisTest is ERC721Holder, TestHelper {
 
     IERC20 private _USDT;
 
-    string public name;
-    string public symbol;
-    uint64 public rewardDuration;
-    uint256 public rewardPerSecond;
-    uint256 public baseCostSingle;
-    uint256 public cap;
-
     IERC20 public pai3;
 
     AggregatorV3Interface public priceFeedETH;
@@ -64,18 +57,10 @@ contract DynamisTest is ERC721Holder, TestHelper {
         vm.deal(address(this), totalSupply);
         _USDT = IERC20(new MockToken("Tether USD", "USDT", 6, totalSupply));
 
-        uint256 index = 0;
         uint256 priceETH = 4000 * 1e8;
         uint256 priceUSDT = 1 * 1e8;
         uint256 normalizationETH = 26;
         uint256 normalizationUSDT = 14;
-
-        name = names[index];
-        symbol = symbols[index];
-        rewardDuration = rewardDurations[index];
-        rewardPerSecond = rewardPerSeconds[index];
-        baseCostSingle = baseCostSingles[index];
-        cap = caps[index];
 
         pai3 = IERC20(new PAI3(owner, rewardWallet, totalSupply));
 
