@@ -145,7 +145,7 @@ contract DynamisTest is ERC721Holder, TestHelper {
         uint256 callerDynamis0 = dynamis.balanceOf(address(this));
         uint256 treasuryETH0 = treasuryWallet.balance;
 
-        _mint(params);
+        _mintHelper(params);
 
         uint256 callerETH1 = address(this).balance;
         uint256 callerDynamis1 = dynamis.balanceOf(address(this));
@@ -164,7 +164,7 @@ contract DynamisTest is ERC721Holder, TestHelper {
         callerDynamis0 = callerDynamis1;
         treasuryETH0 = treasuryETH1;
 
-        _mint(params);
+        _mintHelper(params);
 
         callerETH1 = address(this).balance;
         callerDynamis1 = dynamis.balanceOf(address(this));
@@ -183,7 +183,7 @@ contract DynamisTest is ERC721Holder, TestHelper {
         callerDynamis0 = callerDynamis1;
         treasuryETH0 = treasuryETH1;
 
-        _mint(params);
+        _mintHelper(params);
 
         callerETH1 = address(this).balance;
         callerDynamis1 = dynamis.balanceOf(address(this));
@@ -202,7 +202,7 @@ contract DynamisTest is ERC721Holder, TestHelper {
         callerDynamis0 = callerDynamis1;
         treasuryETH0 = treasuryETH1;
 
-        _mint(params);
+        _mintHelper(params);
 
         callerETH1 = address(this).balance;
         callerDynamis1 = dynamis.balanceOf(address(this));
@@ -238,7 +238,7 @@ contract DynamisTest is ERC721Holder, TestHelper {
         uint256 callerDynamis0 = dynamis.balanceOf(address(this));
         uint256 treasuryUSDT0 = _USDT.balanceOf(treasuryWallet);
 
-        _mint(params);
+        _mintHelper(params);
 
         uint256 callerUSDT1 = _USDT.balanceOf(address(this));
         uint256 callerDynamis1 = dynamis.balanceOf(address(this));
@@ -257,7 +257,7 @@ contract DynamisTest is ERC721Holder, TestHelper {
         callerDynamis0 = callerDynamis1;
         treasuryUSDT0 = treasuryUSDT1;
 
-        _mint(params);
+        _mintHelper(params);
 
         callerUSDT1 = _USDT.balanceOf(address(this));
         callerDynamis1 = dynamis.balanceOf(address(this));
@@ -289,7 +289,7 @@ contract DynamisTest is ERC721Holder, TestHelper {
         params.token = _ETH;
         params.errorSelector = 0x0;
 
-        _mint(params);
+        _mintHelper(params);
 
         // // Minting second half of first phase cap with USDT.
 
@@ -298,7 +298,7 @@ contract DynamisTest is ERC721Holder, TestHelper {
         params.token = _USDT;
         params.errorSelector = 0x0;
 
-        _mint(params);
+        _mintHelper(params);
 
         // Checking revert when exceeding initial cap.
 
@@ -307,14 +307,14 @@ contract DynamisTest is ERC721Holder, TestHelper {
         params.token = _ETH;
         params.errorSelector = BaseV2Errors.ExceededCap.selector;
 
-        _mint(params);
+        _mintHelper(params);
 
         params.quantity = initialCap;
         params.cost = params.quantity * costSingleUSDT;
         params.token = _USDT;
         params.errorSelector = BaseV2Errors.ExceededCap.selector;
 
-        _mint(params);
+        _mintHelper(params);
 
         // Minting single quantity to pause first phase.
 
@@ -323,7 +323,7 @@ contract DynamisTest is ERC721Holder, TestHelper {
         params.token = _ETH;
         params.errorSelector = 0x0;
 
-        _mint(params);
+        _mintHelper(params);
 
         // Checking revert when paused.
 
@@ -332,14 +332,14 @@ contract DynamisTest is ERC721Holder, TestHelper {
         params.token = _USDT;
         params.errorSelector = Pausable.EnforcedPause.selector;
 
-        _mint(params);
+        _mintHelper(params);
 
         params.quantity = initialCap;
         params.cost = params.quantity * costSingleETH;
         params.token = _ETH;
         params.errorSelector = Pausable.EnforcedPause.selector;
 
-        _mint(params);
+        _mintHelper(params);
 
         // Bumping phase with incorrect caller.
 
@@ -366,7 +366,7 @@ contract DynamisTest is ERC721Holder, TestHelper {
         params.token = _USDT;
         params.errorSelector = 0x0;
 
-        _mint(params);
+        _mintHelper(params);
 
         // Minting second half of second phase cap with ETH.
 
@@ -375,7 +375,7 @@ contract DynamisTest is ERC721Holder, TestHelper {
         params.token = _ETH;
         params.errorSelector = 0x0;
 
-        _mint(params);
+        _mintHelper(params);
 
         // Checking revert when exceeding cap.
 
@@ -384,14 +384,14 @@ contract DynamisTest is ERC721Holder, TestHelper {
         params.token = _USDT;
         params.errorSelector = BaseV2Errors.ExceededCap.selector;
 
-        _mint(params);
+        _mintHelper(params);
 
         params.quantity = cap;
         params.cost = params.quantity * costSingleETH;
         params.token = _ETH;
         params.errorSelector = BaseV2Errors.ExceededCap.selector;
 
-        _mint(params);
+        _mintHelper(params);
     }
 
     function test_Vesting() external {
@@ -414,7 +414,7 @@ contract DynamisTest is ERC721Holder, TestHelper {
         params.quantity = 1;
         params.cost = params.quantity * costSingleETH;
 
-        _mint(params);
+        _mintHelper(params);
 
         uint256 tokenId = dynamis.totalSupply();
 
@@ -437,7 +437,7 @@ contract DynamisTest is ERC721Holder, TestHelper {
         params.quantity = 10;
         params.cost = params.quantity * costSingleETH;
 
-        _mint(params);
+        _mintHelper(params);
 
         tokenId = dynamis.totalSupply() / 2;
 
@@ -464,7 +464,7 @@ contract DynamisTest is ERC721Holder, TestHelper {
         vm.deal(secondary, params.cost);
         vm.startPrank(secondary);
 
-        _mint(params);
+        _mintHelper(params);
 
         tokenId = dynamis.totalSupply();
 
@@ -494,7 +494,7 @@ contract DynamisTest is ERC721Holder, TestHelper {
         vm.deal(secondary, params.cost);
         vm.startPrank(secondary);
 
-        _mint(params);
+        _mintHelper(params);
 
         tokenId = dynamis.totalSupply();
 
