@@ -66,7 +66,7 @@ interface DynamisErrors {
     error InvalidAddress();
 
     /**
-     * @dev Indicates an error with the given argument value. For example, `0`.
+     * @dev Indicates an error with the given argument amount. For example, `0`.
      */
     error InvalidAmount();
 
