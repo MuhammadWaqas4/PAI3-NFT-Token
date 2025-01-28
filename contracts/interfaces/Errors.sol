@@ -7,12 +7,6 @@ pragma solidity 0.8.28;
  */
 interface DynamisErrors {
     /**
-     * @dev Indicates a failure with the deadline if the deadline has been
-     * crossed when a signature is verified.
-     */
-    error AfterSignatureDeadline();
-
-    /**
      * @dev Indicates a failure with the phase if the phase is being bumped
      * again.
      */
@@ -111,4 +105,16 @@ interface DynamisErrors {
      * `""`.
      */
     error InvalidString();
+
+    /**
+     * @dev Indicates a failure with the deadline if the deadline has been
+     * crossed when a signature is verified.
+     */
+    error SignatureDeadlineCrossed();
+
+    /**
+     * @dev Indicates a failure with the signature if the signature has already
+     * been seen at least once.
+     */
+    error SignatureAlreadySeen();
 }

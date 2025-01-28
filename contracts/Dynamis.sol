@@ -76,11 +76,14 @@ contract Dynamis is Ownable2Step, Pausable, ERC721A, DynamisErrors, IDynamis {
     /// @inheritdoc IDynamis
     Phase public phase;
 
+    /// @dev Denotes if a `signature` has already been `seen` at least once.
+    mapping(bytes signature => bool seen) private _history;
+
     /// @dev Time based `records` relevant to a packed `index`.
     mapping(uint24 index => Record record) private _records;
 
     /// @inheritdoc IDynamis
-    mapping(address account => uint256 due) public dues;
+    mapping(uint256 tokenId => uint256 due) public dues;
 
     /// @inheritdoc IDynamis
     mapping(IERC20 token => AggregatorV3Interface priceFeed) public priceFeeds;
@@ -155,13 +158,10 @@ contract Dynamis is Ownable2Step, Pausable, ERC721A, DynamisErrors, IDynamis {
      */
     function mintWithETH(
         uint256 quantity,
+        uint256 discountCostSingle,
         uint256 deadline,
         bytes memory signature
     ) external payable {
-        if (block.timestamp > deadline) {
-            _revert(AfterSignatureDeadline.selector);
-        }
-
         if (msg.value == 0) {
             _revert(InvalidPayableValue.selector);
         }
@@ -172,6 +172,7 @@ contract Dynamis is Ownable2Step, Pausable, ERC721A, DynamisErrors, IDynamis {
             token,
             tokenDecimals,
             quantity,
+            discountCostSingle,
             deadline,
             signature
         );
@@ -191,6 +192,7 @@ contract Dynamis is Ownable2Step, Pausable, ERC721A, DynamisErrors, IDynamis {
     function mint(
         IERC20 token,
         uint256 quantity,
+        uint256 discountCostSingle,
         uint256 deadline,
         bytes memory signature
     ) external {
@@ -203,6 +205,7 @@ contract Dynamis is Ownable2Step, Pausable, ERC721A, DynamisErrors, IDynamis {
             token,
             tokenDecimals,
             quantity,
+            discountCostSingle,
             deadline,
             signature
         );
@@ -215,13 +218,35 @@ contract Dynamis is Ownable2Step, Pausable, ERC721A, DynamisErrors, IDynamis {
     /**
      * @inheritdoc IDynamis
      */
-    function claim(uint256 tokenId) external {
+    function claim(
+        uint256 tokenId,
+        uint256 deadline,
+        bytes memory signature
+    ) external {
         if (ownerOf(tokenId) != msg.sender) {
             _revert(CallerNotOwner.selector);
         }
 
-        uint256 due = dues[msg.sender];
-        delete dues[msg.sender];
+        if (block.timestamp > deadline) {
+            _revert(SignatureDeadlineCrossed.selector);
+        }
+
+        if (_history[signature]) {
+            _revert(SignatureAlreadySeen.selector);
+        }
+
+        _history[signature] = true;
+
+        bytes32 hash = keccak256(
+            abi.encodePacked(msg.sender, tokenId, deadline)
+        ).toEthSignedMessageHash();
+
+        if (signer != hash.recover(signature)) {
+            _revert(IncorrectSignatureRecovery.selector);
+        }
+
+        uint256 due = dues[tokenId];
+        delete dues[tokenId];
 
         Record memory record = _tokenRecords(tokenId);
 
@@ -236,21 +261,21 @@ contract Dynamis is Ownable2Step, Pausable, ERC721A, DynamisErrors, IDynamis {
 
             if (lastInteractedTimestamp == 0) {
                 _initializeOwnershipAt(tokenId);
+
                 _setExtraDataAt(tokenId, index);
+
                 _records[index] = record;
                 lastInteractedTimestamp = record.startTimestamp;
             }
 
-            uint64 currentTime = uint64(
+            uint64 timestamp = uint64(
                 block.timestamp < record.rewardingEndTimestamp
                     ? block.timestamp
                     : record.rewardingEndTimestamp
             );
-            currentRecord.lastInteractedTimestamp = currentTime;
+            currentRecord.lastInteractedTimestamp = timestamp;
 
-            reward =
-                (currentTime - lastInteractedTimestamp) *
-                REWARD_PER_SECOND;
+            reward = (timestamp - lastInteractedTimestamp) * REWARD_PER_SECOND;
         }
 
         uint256 totalReward = reward + due;
@@ -340,21 +365,11 @@ contract Dynamis is Ownable2Step, Pausable, ERC721A, DynamisErrors, IDynamis {
     ) public payable override(ERC721A, IERC721A) {
         Record memory record = _tokenRecords(tokenId);
 
-        super.transferFrom(from, to, tokenId);
-
         if (block.timestamp < record.vestingEndTimestamp) {
-            uint32 callerSize;
-            uint32 toSize;
-
-            assembly {
-                callerSize := extcodesize(caller())
-                toSize := extcodesize(to)
-            }
-
-            if (callerSize > 0 || toSize > 0) {
-                _revert(BeforeVestingExpiry.selector);
-            }
+            _revert(BeforeVestingExpiry.selector);
         }
+
+        super.transferFrom(from, to, tokenId);
 
         if (record.lastInteractedTimestamp < record.rewardingEndTimestamp) {
             uint24 index = uint24(tokenId);
@@ -365,19 +380,20 @@ contract Dynamis is Ownable2Step, Pausable, ERC721A, DynamisErrors, IDynamis {
 
             if (lastInteractedTimestamp == 0) {
                 _setExtraDataAt(tokenId, index);
+
                 _records[index] = record;
                 lastInteractedTimestamp = record.startTimestamp;
             }
 
-            uint64 currentTime = uint64(
+            uint64 timestamp = uint64(
                 block.timestamp < record.rewardingEndTimestamp
                     ? block.timestamp
                     : record.rewardingEndTimestamp
             );
-            currentRecord.lastInteractedTimestamp = currentTime;
+            currentRecord.lastInteractedTimestamp = timestamp;
 
-            dues[from] +=
-                (currentTime - lastInteractedTimestamp) *
+            dues[tokenId] +=
+                (timestamp - lastInteractedTimestamp) *
                 REWARD_PER_SECOND;
         }
     }
@@ -424,16 +440,16 @@ contract Dynamis is Ownable2Step, Pausable, ERC721A, DynamisErrors, IDynamis {
         }
 
         uint24 startIndex = uint24(startTokenId);
-        uint64 currentTimestamp = uint64(block.timestamp);
-
-        _records[startIndex] = Record({
-            startTimestamp: currentTimestamp,
-            vestingEndTimestamp: currentTimestamp + VESTING_DURATION,
-            rewardingEndTimestamp: currentTimestamp + REWARD_DURATION,
-            lastInteractedTimestamp: currentTimestamp
-        });
+        uint64 timestamp = uint64(block.timestamp);
 
         _setExtraDataAt(startTokenId, startIndex);
+
+        _records[startIndex] = Record({
+            startTimestamp: timestamp,
+            vestingEndTimestamp: timestamp + VESTING_DURATION,
+            rewardingEndTimestamp: timestamp + REWARD_DURATION,
+            lastInteractedTimestamp: timestamp
+        });
     }
 
     /**
@@ -472,14 +488,25 @@ contract Dynamis is Ownable2Step, Pausable, ERC721A, DynamisErrors, IDynamis {
     /**
      * @dev Implements {mint} logic.
      * NOTE: Can only be called when unpaused.
+     * @param token Registered payment method.
+     * @param quantity Amount of NFTs to mint.
+     * @param discountCostSingle Discounted base cost for a single token.
+     * @param deadline Expiration deadline for the signed message.
+     * @param signature Signed message to determine correctness in the case of a
+     * discount.
      */
     function _processMint(
         IERC20 token,
         uint8 tokenDecimals,
         uint256 quantity,
+        uint256 discountCostSingle,
         uint256 deadline,
         bytes memory signature
     ) private whenNotPaused returns (uint256) {
+        if (block.timestamp > deadline) {
+            _revert(SignatureDeadlineCrossed.selector);
+        }
+
         AggregatorV3Interface priceFeed = priceFeeds[token];
 
         if (address(priceFeed) == address(0)) {
@@ -487,21 +514,33 @@ contract Dynamis is Ownable2Step, Pausable, ERC721A, DynamisErrors, IDynamis {
         }
 
         uint256 startTokenId = _nextTokenId();
+        uint256 baseCostSingle;
 
-        bytes32 hash = keccak256(
-            abi.encodePacked(msg.sender, startTokenId, deadline)
-        ).toEthSignedMessageHash();
+        if (discountCostSingle < BASE_COST_SINGLE) {
+            bytes32 hash = keccak256(
+                abi.encodePacked(
+                    msg.sender,
+                    startTokenId,
+                    discountCostSingle,
+                    deadline
+                )
+            ).toEthSignedMessageHash();
 
-        if (signer != hash.recover(signature)) {
-            _revert(IncorrectSignatureRecovery.selector);
+            if (signer != hash.recover(signature)) {
+                _revert(IncorrectSignatureRecovery.selector);
+            }
+
+            baseCostSingle = discountCostSingle;
+        } else {
+            baseCostSingle = BASE_COST_SINGLE;
         }
 
-        uint256 baseCost = quantity * BASE_COST_SINGLE;
+        uint256 baseCost = quantity * baseCostSingle;
         uint256 normalization = priceFeed.decimals() + tokenDecimals;
         (, int256 price, , , ) = priceFeed.latestRoundData();
         uint256 cost = (baseCost * 10 ** normalization) / uint256(price);
 
-        if (cost < BASE_COST_SINGLE) {
+        if (cost < baseCostSingle) {
             _revert(InsufficientCost.selector);
         }
 

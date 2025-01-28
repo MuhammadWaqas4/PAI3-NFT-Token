@@ -117,11 +117,14 @@ interface IDynamis is IERC721A {
      * `caller`.
      * NOTE: Payable value must be given. Only accepts ETH as a payment method.
      * @param quantity Amount of NFTs to mint.
+     * @param discountCostSingle Discounted base cost for a single token.
      * @param deadline Expiration deadline for the signed message.
-     * @param signature Signed message to determine correctness.
+     * @param signature Signed message to determine correctness in the case of a
+     * discount.
      */
     function mintWithETH(
         uint256 quantity,
+        uint256 discountCostSingle,
         uint256 deadline,
         bytes memory signature
     ) external payable;
@@ -132,12 +135,15 @@ interface IDynamis is IERC721A {
      * NOTE: Only accepts `token` if it is registered as a payment method.
      * @param token Registered payment method.
      * @param quantity Amount of NFTs to mint.
+     * @param discountCostSingle Discounted base cost for a single token.
      * @param deadline Expiration deadline for the signed message.
-     * @param signature Signed message to determine correctness.
+     * @param signature Signed message to determine correctness in the case of a
+     * discount.
      */
     function mint(
         IERC20 token,
         uint256 quantity,
+        uint256 discountCostSingle,
         uint256 deadline,
         bytes memory signature
     ) external;
@@ -145,8 +151,14 @@ interface IDynamis is IERC721A {
     /**
      * @notice Transfers rewards collected by the user relevant to a `tokenId`.
      * @param tokenId Unique identifier of the token.
+     * @param deadline Expiration deadline for the signed message.
+     * @param signature Signed message to determine correctness.
      */
-    function claim(uint256 tokenId) external;
+    function claim(
+        uint256 tokenId,
+        uint256 deadline,
+        bytes memory signature
+    ) external;
 
     /**
      * @notice Bumps the phase after the first phase has ended and changes the
@@ -261,10 +273,10 @@ interface IDynamis is IERC721A {
 
     /**
      * @notice Due rewards relevant to an `account`.
-     * @param account Address of the user.
+     * @param tokenId Unique identifier of the NFT.
      * @return due Due rewards not yet claimed.
      */
-    function dues(address account) external view returns (uint256);
+    function dues(uint256 tokenId) external view returns (uint256);
 
     /**
      * @notice Address of the price feed relevant to a registered payment
