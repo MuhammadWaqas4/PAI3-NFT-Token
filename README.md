@@ -18,10 +18,10 @@ Set the `URL_MAINNET`, `PRIVATE_KEY_MAINNET` and `BLOCK_EXPLORER_API_KEY_MAINNET
 You can achieve this by first creating a file named **.env** at the root of your project. Then copy the contents of the **.env.example** file into your newly created **.env** file. Finally fill in the variables for the aforementioned networks.
 
 `URL_...`: This is the RPC URL of your chosen network. Most online resources can provide these for free.<br>
-`PRIVATE_KEY_...`: This is the private key of your account<sup>1</sup>.<br>
+`PRIVATE_KEY_...`: This is the private key of your account\*.<br>
 `BLOCK_EXPLORER_API_KEY_...`: This is the block explorer api key used for verification of contracts. You can get these from your account on the relevant block explorer of your chosen network.
 
-<sup>1</sup> ***For staging deployment, please use a key that does NOT have any real funds associated with it.***
+\* ***For staging deployment, please use a key that does NOT have any real funds associated with it.***
 
 ### Configure API keys
 
