@@ -17,8 +17,12 @@ interface IDynamis is IERC721A {
     /* ========================== TYPES ========================== */
 
     enum Phase {
+        PREMINT,
         FIRST,
-        SECOND
+        SECOND,
+        THIRD,
+        FOURTH,
+        FIFTH
     }
 
     struct DynamisParams {
@@ -28,16 +32,12 @@ interface IDynamis is IERC721A {
         string name;
         /// @custom:member Token collection symbol.
         string symbol;
+        /// @custom:member Base cost for a single token.
+        uint256 baseCostSingle;
         /// @custom:member Cap on the number of minted tokens initially.
         uint256 initialCap;
         /// @custom:member Cap on the number of minted tokens.
         uint256 cap;
-        /// @custom:member Reward duration in seconds.
-        uint64 rewardDuration;
-        /// @custom:member Reward generated per second.
-        uint256 rewardPerSecond;
-        /// @custom:member Base cost for a single token.
-        uint256 baseCostSingle;
         /// @custom:member Address of the PAI3 token.
         IERC20 pai3;
         /// @custom:member Address of the treasury wallet.

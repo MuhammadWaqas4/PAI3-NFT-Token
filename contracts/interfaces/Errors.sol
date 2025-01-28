@@ -16,7 +16,7 @@ interface DynamisErrors {
      * @dev Indicates a failure with the expiry if the expiry has not been
      * crossed when a transfer or approval is performed.
      */
-    error BeforeVestingExpiry();
+    error Vested();
 
     /**
      * @dev Indicates a failure with the caller if the caller is not the owner

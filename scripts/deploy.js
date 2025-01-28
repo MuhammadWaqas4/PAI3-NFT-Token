@@ -13,11 +13,9 @@ async function main() {
     const ownerAddress = process.env.OWNER_ADDRESS;
     const name = process.env.NAME;
     const symbol = process.env.SYMBOL;
+    const baseCostSingle = process.env.BASE_COST_SINGLE;
     const initialCap = process.env.INITIAL_CAP;
     const cap = process.env.CAP;
-    const rewardDuration = process.env.REWARD_DURATION;
-    const rewardPerSecond = process.env.REWARD_PER_SECOND;
-    const baseCostSingle = process.env.BASE_COST_SINGLE;
     const pai3Address = process.env.PAI3_ADDRESS;
     const treasuryWalletAddress = process.env.TREASURY_WALLET_ADDRESS;
     const rewardWalletAddress = process.env.REWARD_WALLET_ADDRESS;
@@ -32,11 +30,9 @@ async function main() {
             owner: ownerAddress,
             name: name,
             symbol: symbol,
+            baseCostSingle: baseCostSingle,
             initialCap: initialCap,
             cap: cap,
-            rewardDuration: rewardDuration,
-            rewardPerSecond: rewardPerSecond,
-            baseCostSingle: baseCostSingle,
             pai3: pai3Address,
             treasuryWallet: treasuryWalletAddress,
             rewardWallet: rewardWalletAddress,

@@ -34,11 +34,17 @@ contract Dynamis is Ownable2Step, Pausable, ERC721A, DynamisErrors, IDynamis {
 
     /* ========================== STATE VARIABLES ========================== */
 
-    /// @dev One year time in seconds.
-    uint256 private constant _ONE_YEAR_TIME = 31_536_000 seconds;
-
     /// @inheritdoc IDynamis
     uint64 public constant VESTING_DURATION = 31_536_000 seconds;
+
+    /// @inheritdoc IDynamis
+    uint64 public constant REWARD_DURATION = 94_608_000 seconds;
+
+    /// @inheritdoc IDynamis
+    uint256 public constant REWARD_PER_SECOND = 0.000015854895991883 * 1e18;
+
+    /// @inheritdoc IDynamis
+    uint256 public immutable BASE_COST_SINGLE;
 
     /// @dev Cap on the number of minted NFTs initially.
     /// NOTE: Once this cap is reached further minting will be paused until the
@@ -48,15 +54,6 @@ contract Dynamis is Ownable2Step, Pausable, ERC721A, DynamisErrors, IDynamis {
     /// @dev Cap on the number of minted NFTs.
     /// NOTE: This value is inclusive of {_INITIAL_CAP}.
     uint256 private immutable _CAP;
-
-    /// @inheritdoc IDynamis
-    uint64 public immutable REWARD_DURATION;
-
-    /// @inheritdoc IDynamis
-    uint256 public immutable REWARD_PER_SECOND;
-
-    /// @inheritdoc IDynamis
-    uint256 public immutable BASE_COST_SINGLE;
 
     /// @inheritdoc IDynamis
     IERC20 public immutable PAI3;
@@ -98,11 +95,9 @@ contract Dynamis is Ownable2Step, Pausable, ERC721A, DynamisErrors, IDynamis {
         DynamisParams memory params_
     ) Ownable(params_.owner) ERC721A(params_.name, params_.symbol) {
         if (
+            params_.baseCostSingle == 0 ||
             params_.initialCap == 0 ||
-            params_.cap == 0 ||
-            params_.rewardDuration == 0 ||
-            params_.rewardPerSecond == 0 ||
-            params_.baseCostSingle == 0
+            params_.cap == 0
         ) {
             _revert(InvalidAmount.selector);
         }
@@ -132,12 +127,10 @@ contract Dynamis is Ownable2Step, Pausable, ERC721A, DynamisErrors, IDynamis {
             _revert(InvalidArrayArity.selector);
         }
 
+        BASE_COST_SINGLE = params_.baseCostSingle;
+
         _INITIAL_CAP = params_.initialCap;
         _CAP = params_.cap;
-
-        REWARD_DURATION = params_.rewardDuration;
-        REWARD_PER_SECOND = params_.rewardPerSecond;
-        BASE_COST_SINGLE = params_.baseCostSingle;
 
         PAI3 = params_.pai3;
         TREASURY_WALLET = params_.treasuryWallet;
@@ -327,6 +320,7 @@ contract Dynamis is Ownable2Step, Pausable, ERC721A, DynamisErrors, IDynamis {
         }
 
         _unpause();
+
         phase = Phase.SECOND;
     }
 
@@ -366,7 +360,7 @@ contract Dynamis is Ownable2Step, Pausable, ERC721A, DynamisErrors, IDynamis {
         Record memory record = _tokenRecords(tokenId);
 
         if (block.timestamp < record.vestingEndTimestamp) {
-            _revert(BeforeVestingExpiry.selector);
+            _revert(Vested.selector);
         }
 
         super.transferFrom(from, to, tokenId);
@@ -503,14 +497,14 @@ contract Dynamis is Ownable2Step, Pausable, ERC721A, DynamisErrors, IDynamis {
         uint256 deadline,
         bytes memory signature
     ) private whenNotPaused returns (uint256) {
-        if (block.timestamp > deadline) {
-            _revert(SignatureDeadlineCrossed.selector);
-        }
-
         AggregatorV3Interface priceFeed = priceFeeds[token];
 
         if (address(priceFeed) == address(0)) {
             _revert(IncorrectPaymentToken.selector);
+        }
+
+        if (block.timestamp > deadline) {
+            _revert(SignatureDeadlineCrossed.selector);
         }
 
         uint256 startTokenId = _nextTokenId();
