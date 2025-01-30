@@ -14,7 +14,7 @@ async function main() {
     const name = process.env.NAME;
     const symbol = process.env.SYMBOL;
     const reservedCap = process.env.RESERVED_CAP;
-    const launchCap = process.env.LAUNCH_CAP;
+    const cap = process.env.CAP;
     const pai3Address = process.env.PAI3_ADDRESS;
     const treasuryWalletAddress = process.env.TREASURY_WALLET_ADDRESS;
     const rewardWalletAddress = process.env.REWARD_WALLET_ADDRESS;
@@ -42,7 +42,7 @@ async function main() {
             name: name,
             symbol: symbol,
             reservedCap: reservedCap,
-            launchCap: launchCap,
+            cap: cap,
             pai3: pai3Address,
             treasuryWallet: treasuryWalletAddress,
             rewardWallet: rewardWalletAddress,

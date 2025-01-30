@@ -50,7 +50,7 @@ contract Dynamis is Ownable2Step, Pausable, ERC721A, DynamisErrors, IDynamis {
     uint64 public immutable RESERVED_CAP;
 
     /// @inheritdoc IDynamis
-    uint64 public immutable LAUNCH_CAP;
+    uint64 public immutable CAP;
 
     /// @inheritdoc IDynamis
     IERC20 public immutable PAI3;
@@ -100,7 +100,7 @@ contract Dynamis is Ownable2Step, Pausable, ERC721A, DynamisErrors, IDynamis {
     constructor(
         DynamisParams memory params_
     ) Ownable(params_.owner) ERC721A(params_.name, params_.symbol) {
-        if (params_.reservedCap == 0 || params_.launchCap == 0) {
+        if (params_.reservedCap == 0 || params_.cap == 0) {
             _revert(InvalidAmount.selector);
         }
 
@@ -123,7 +123,7 @@ contract Dynamis is Ownable2Step, Pausable, ERC721A, DynamisErrors, IDynamis {
         }
 
         RESERVED_CAP = params_.reservedCap;
-        LAUNCH_CAP = params_.launchCap;
+        CAP = params_.cap;
 
         PAI3 = params_.pai3;
         TREASURY_WALLET = params_.treasuryWallet;
@@ -421,8 +421,7 @@ contract Dynamis is Ownable2Step, Pausable, ERC721A, DynamisErrors, IDynamis {
 
     /**
      * @inheritdoc ERC721A
-     * @dev Overridden to introduce {cap} to collection's {totalSupply} and to
-     * add extraData for book keeping.
+     * @dev Overridden to add extra data in token ownership for book keeping.
      */
     function _mint(address to, uint256 quantity) internal override {
         uint256 startTokenId = _nextTokenId();
@@ -618,11 +617,16 @@ contract Dynamis is Ownable2Step, Pausable, ERC721A, DynamisErrors, IDynamis {
         _finalizeMint(msg.sender, quantity);
     }
 
+    /**
+     * @dev Implements minting and cap validations.
+     * @param to Address to receive the NFTS.
+     * @param quantity Amount of NFTs to mint.
+     */
     function _finalizeMint(address to, uint256 quantity) private {
         // Minting.
         _safeMint(to, quantity);
 
-        uint256 maxSupply = LAUNCH_CAP;
+        uint256 maxSupply = CAP;
         uint256 supply = totalSupply() - reservedMinted;
 
         if (supply > maxSupply) {
@@ -632,7 +636,7 @@ contract Dynamis is Ownable2Step, Pausable, ERC721A, DynamisErrors, IDynamis {
 
     /**
      * @dev Implements {updateSigner} logic.
-     * @param newSigner Address of the new ECDSA signer.
+     * @param newSigner Address of the new signature signer.
      */
     function _updateSigner(address newSigner) private {
         if (newSigner == address(0)) {

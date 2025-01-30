@@ -51,10 +51,10 @@ interface IDynamis is IERC721A {
         string name;
         /// @custom:member Token collection symbol.
         string symbol;
-        /// @custom:member Cap on the number of reserved NFTs.
+        /// @custom:member Cap on the number of reserved NFTs minted.
         uint64 reservedCap;
-        /// @custom:member Cap on the number of NFTs for launch.
-        uint64 launchCap;
+        /// @custom:member Cap on the number of NFTs minted for all phases.
+        uint64 cap;
         /// @custom:member Address of the PAI3 token.
         IERC20 pai3;
         /// @custom:member Address of the treasury wallet.
@@ -175,13 +175,15 @@ interface IDynamis is IERC721A {
     /**
      * @notice Mints `quantity` NFTs and transfers them to the caller.
      * NOTE: Payable value must be given. Only accepts Eth as a payment method.
+     * Mints NFTs for the regular phases.
      * @param quantity Amount of NFTs to mint.
      */
     function mintWithEth(uint256 quantity) external payable;
 
     /**
      * @notice Mints `quantity` NFTs and transfers them to the caller.
-     * NOTE: Only accepts `token` if it is registered as a payment method.
+     * NOTE: Only accepts `token` if it is registered as a payment method. Mints
+     * NFTs for the regular phases.
      * @param token Registered payment method.
      * @param quantity Amount of NFTs to mint.
      */
@@ -213,9 +215,9 @@ interface IDynamis is IERC721A {
     function unpause() external;
 
     /**
-     * @notice Updates the address of the ECDSA signer.
+     * @notice Updates the address of the signature signer.
      * NOTE: Only owner can call this function.
-     * @param newSigner Address of the new ECDSA signer.
+     * @param newSigner Address of the new signature signer.
      */
     function updateSigner(address newSigner) external;
 
@@ -263,14 +265,14 @@ interface IDynamis is IERC721A {
     function REWARD_PER_SECOND() external view returns (uint256);
 
     /**
-     * @notice Cap on the number of reserved NFTs.
+     * @notice Cap on the number of reserved NFTs minted.
      */
     function RESERVED_CAP() external view returns (uint64);
 
     /**
-     * @notice Cap on the number of NFTs for launch.
+     * @notice Cap on the number of NFTs minted for all phases.
      */
-    function LAUNCH_CAP() external view returns (uint64);
+    function CAP() external view returns (uint64);
 
     /**
      * @notice Address of the PAI3 token.
