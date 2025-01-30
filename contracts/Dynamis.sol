@@ -34,11 +34,8 @@ contract Dynamis is Ownable2Step, Pausable, ERC721A, DynamisErrors, IDynamis {
 
     /* ========================== STATE VARIABLES ========================== */
 
-    /// @dev Two weeks time in seconds.
-    uint64 private constant _TWO_WEEKS_TIME = 1_209_600 seconds;
-
     /// @dev Minimum mint quantity for the premint phase.
-    uint64 private constant _PREMINT_MINIMUM_QUANTITY = 200;
+    uint64 private constant _SALE_MINIMUM_MINT_QUANTITY = 200;
 
     /// @inheritdoc IDynamis
     uint64 public constant VESTING_DURATION = 31_536_000 seconds;
@@ -54,9 +51,6 @@ contract Dynamis is Ownable2Step, Pausable, ERC721A, DynamisErrors, IDynamis {
 
     /// @inheritdoc IDynamis
     uint64 public immutable LAUNCH_CAP;
-
-    /// @inheritdoc IDynamis
-    uint256 public immutable LAUNCH_START_TIMESTAMP;
 
     /// @inheritdoc IDynamis
     IERC20 public immutable PAI3;
@@ -80,10 +74,10 @@ contract Dynamis is Ownable2Step, Pausable, ERC721A, DynamisErrors, IDynamis {
     string public baseURI;
 
     /// @inheritdoc IDynamis
-    uint256[6] public phaseBaseCosts;
+    uint256[7] public phaseBaseCosts;
 
     /// @inheritdoc IDynamis
-    uint256[6] public phaseEndTimestamps;
+    Timestamps[7] public phaseTimestamps;
 
     /// @dev Denotes if a `signature` has already been `seen` at least once.
     mapping(bytes signature => bool seen) private _history;
@@ -106,11 +100,7 @@ contract Dynamis is Ownable2Step, Pausable, ERC721A, DynamisErrors, IDynamis {
     constructor(
         DynamisParams memory params_
     ) Ownable(params_.owner) ERC721A(params_.name, params_.symbol) {
-        if (
-            params_.reservedCap == 0 ||
-            params_.launchCap == 0 ||
-            params_.launchStartTimestamp == 0
-        ) {
+        if (params_.reservedCap == 0 || params_.launchCap == 0) {
             _revert(InvalidAmount.selector);
         }
 
@@ -134,17 +124,15 @@ contract Dynamis is Ownable2Step, Pausable, ERC721A, DynamisErrors, IDynamis {
 
         RESERVED_CAP = params_.reservedCap;
         LAUNCH_CAP = params_.launchCap;
-        LAUNCH_START_TIMESTAMP = params_.launchStartTimestamp;
 
         PAI3 = params_.pai3;
         TREASURY_WALLET = params_.treasuryWallet;
         REWARD_WALLET = params_.rewardWallet;
 
         phaseBaseCosts = params_.phaseBaseCosts;
-        phaseEndTimestamps[0] = params_.launchStartTimestamp + _TWO_WEEKS_TIME;
 
-        for (uint256 i = 1; i < phaseBaseCosts.length; ++i) {
-            phaseEndTimestamps[i] = phaseEndTimestamps[i - 1] + _TWO_WEEKS_TIME;
+        for (uint256 i; i < phaseTimestamps.length; ++i) {
+            phaseTimestamps[i] = params_.phaseTimestamps[i];
         }
 
         _updateSigner(params_.signer);
@@ -170,37 +158,40 @@ contract Dynamis is Ownable2Step, Pausable, ERC721A, DynamisErrors, IDynamis {
             _revert(ExceededCap.selector);
         }
 
+        // Minting.
         _safeMint(to, quantity);
     }
 
     /**
      * @inheritdoc IDynamis
      */
-    function discountMintWithEth(
-        uint256 quantity,
-        uint256 discountBaseCost,
-        uint256 deadline,
-        bytes memory signature
-    ) external payable {
-        _processDiscount(quantity, discountBaseCost, deadline, signature);
-
+    function safeMintSale(address to, uint256 quantity) external onlyOwner {
         _processPhase(quantity);
 
-        _processMint({
-            token: _ETH,
-            tokenDecimals: 18,
-            quantity: quantity,
-            baseCost: discountBaseCost
-        });
+        _finalizeMint(to, quantity);
     }
 
     /**
      * @inheritdoc IDynamis
      */
-    function discountMint(
+    function mintWhitelistWithEth(
+        uint256 quantity,
+        uint256 deadline,
+        bytes memory signature
+    ) external payable {
+        _processPhase(quantity);
+
+        _processDiscount(quantity, deadline, signature);
+
+        _processMint({ token: _ETH, tokenDecimals: 18, quantity: quantity });
+    }
+
+    /**
+     * @inheritdoc IDynamis
+     */
+    function mintWhitelist(
         IERC20 token,
         uint256 quantity,
-        uint256 discountBaseCost,
         uint256 deadline,
         bytes memory signature
     ) external {
@@ -208,15 +199,14 @@ contract Dynamis is Ownable2Step, Pausable, ERC721A, DynamisErrors, IDynamis {
             _revert(InvalidAddress.selector);
         }
 
-        _processDiscount(quantity, discountBaseCost, deadline, signature);
-
         _processPhase(quantity);
+
+        _processDiscount(quantity, deadline, signature);
 
         _processMint({
             token: token,
             tokenDecimals: IERC20Metadata(address(token)).decimals(),
-            quantity: quantity,
-            baseCost: discountBaseCost
+            quantity: quantity
         });
     }
 
@@ -226,12 +216,7 @@ contract Dynamis is Ownable2Step, Pausable, ERC721A, DynamisErrors, IDynamis {
     function mintWithEth(uint256 quantity) external payable {
         _processPhase(quantity);
 
-        _processMint({
-            token: _ETH,
-            tokenDecimals: 18,
-            quantity: quantity,
-            baseCost: phaseBaseCosts[uint8(_phase) - 1]
-        });
+        _processMint({ token: _ETH, tokenDecimals: 18, quantity: quantity });
     }
 
     /**
@@ -247,8 +232,7 @@ contract Dynamis is Ownable2Step, Pausable, ERC721A, DynamisErrors, IDynamis {
         _processMint({
             token: token,
             tokenDecimals: IERC20Metadata(address(token)).decimals(),
-            quantity: quantity,
-            baseCost: phaseBaseCosts[uint8(_phase) - 1]
+            quantity: quantity
         });
     }
 
@@ -493,16 +477,65 @@ contract Dynamis is Ownable2Step, Pausable, ERC721A, DynamisErrors, IDynamis {
     }
 
     /**
+     * @dev Implements phase validations and phase change logic.
+     * @param quantity Amount of NFTs to mint.
+     */
+    function _processPhase(uint256 quantity) private {
+        if (
+            block.timestamp <= phaseTimestamps[uint8(Phase.SALE)].startTimestamp
+        ) {
+            _revert(LaunchNotStarted.selector);
+        }
+
+        if (
+            block.timestamp > phaseTimestamps[uint8(Phase.FINAL)].endTimestamp
+        ) {
+            _revert(LaunchEnded.selector);
+        }
+
+        uint8 phaseIndex = uint8(_phase);
+        Timestamps memory timestamps = phaseTimestamps[phaseIndex];
+
+        if (block.timestamp > timestamps.endTimestamp) {
+            uint128 previousEndTimestamp = timestamps.endTimestamp;
+
+            for (uint256 i = phaseIndex + 1; i < phaseTimestamps.length; ++i) {
+                timestamps = phaseTimestamps[i];
+
+                if (
+                    previousEndTimestamp < block.timestamp &&
+                    block.timestamp <= timestamps.startTimestamp
+                ) {
+                    _revert(LaunchOnHold.selector);
+                }
+
+                previousEndTimestamp = timestamps.endTimestamp;
+
+                if (
+                    timestamps.startTimestamp < block.timestamp &&
+                    block.timestamp <= timestamps.endTimestamp
+                ) {
+                    _phase = Phase(i);
+
+                    break;
+                }
+            }
+        }
+
+        if (_phase == Phase.SALE && quantity < _SALE_MINIMUM_MINT_QUANTITY) {
+            _revert(InsufficientSaleMintQuantity.selector);
+        }
+    }
+
+    /**
      * @dev Implements discount validations.
      * @param quantity Amount of NFTs to mint.
-     * @param discountBaseCost Discounted base cost for a NFT.
      * @param deadline Expiration deadline for the signed message.
      * @param signature Signed message to determine correctness in the case of a
      * discount.
      */
     function _processDiscount(
         uint256 quantity,
-        uint256 discountBaseCost,
         uint256 deadline,
         bytes memory signature
     ) private {
@@ -517,39 +550,16 @@ contract Dynamis is Ownable2Step, Pausable, ERC721A, DynamisErrors, IDynamis {
         _history[signature] = true;
 
         bytes32 hash = keccak256(
-            abi.encodePacked(msg.sender, quantity, discountBaseCost, deadline)
+            abi.encodePacked(
+                msg.sender,
+                quantity,
+                phaseBaseCosts[uint8(_phase)],
+                deadline
+            )
         ).toEthSignedMessageHash();
 
         if (signer != hash.recover(signature)) {
             _revert(IncorrectSignatureRecovery.selector);
-        }
-    }
-
-    /**
-     * @dev Implements phase validations and phase change logic.
-     * @param quantity Amount of NFTs to mint.
-     */
-    function _processPhase(uint256 quantity) private {
-        if (block.timestamp <= LAUNCH_START_TIMESTAMP) {
-            _revert(LaunchNotStarted.selector);
-        }
-
-        uint8 phaseIndex = uint8(_phase);
-        uint256 phaseEndTimestamp = phaseEndTimestamps[phaseIndex];
-
-        if (block.timestamp > phaseEndTimestamp) {
-            if (_phase == Phase.FINAL) {
-                _revert(LaunchEnded.selector);
-            }
-
-            uint8 increment = uint8(
-                (block.timestamp - phaseEndTimestamp) / _TWO_WEEKS_TIME
-            ) + 1;
-            _phase = Phase(phaseIndex + increment);
-        }
-
-        if (_phase == Phase.PREMINT && quantity < _PREMINT_MINIMUM_QUANTITY) {
-            _revert(InsufficientPremintQuantity.selector);
         }
     }
 
@@ -560,26 +570,19 @@ contract Dynamis is Ownable2Step, Pausable, ERC721A, DynamisErrors, IDynamis {
      * @param tokenDecimals Denomination of the token used as the registered
      * payment method.
      * @param quantity Amount of NFTs to mint.
-     * @param baseCost Base cost to use for cost calculation.
-     * @param quantity Amount of NFTs to mint.
      */
     function _processMint(
         IERC20 token,
         uint8 tokenDecimals,
-        uint256 baseCost,
         uint256 quantity
     ) private whenNotPaused {
-        if (quantity == 0) {
-            _revert(InvalidAmount.selector);
-        }
-
         AggregatorV3Interface priceFeed = priceFeeds[token];
 
         if (address(priceFeed) == address(0)) {
             _revert(IncorrectPaymentToken.selector);
         }
 
-        uint256 totalBaseCost = quantity * baseCost;
+        uint256 totalBaseCost = quantity * phaseBaseCosts[uint8(_phase)];
 
         uint256 normalization = priceFeed.decimals() + tokenDecimals;
         (, int256 price, , , ) = priceFeed.latestRoundData();
@@ -612,7 +615,12 @@ contract Dynamis is Ownable2Step, Pausable, ERC721A, DynamisErrors, IDynamis {
             token.safeTransferFrom(msg.sender, TREASURY_WALLET, cost);
         }
 
-        _safeMint(msg.sender, quantity);
+        _finalizeMint(msg.sender, quantity);
+    }
+
+    function _finalizeMint(address to, uint256 quantity) private {
+        // Minting.
+        _safeMint(to, quantity);
 
         uint256 maxSupply = LAUNCH_CAP;
         uint256 supply = totalSupply() - reservedMinted;

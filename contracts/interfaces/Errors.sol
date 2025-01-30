@@ -30,6 +30,12 @@ interface DynamisErrors {
     error LaunchNotStarted();
 
     /**
+     * @dev Indicates a failure with the launch if the launch is in between
+     * phases and hence is on hold.
+     */
+    error LaunchOnHold();
+
+    /**
      * @dev Indicates a failure with the token if the token is not registered as
      * a payment token with a cooresponding price feed.
      */
@@ -48,16 +54,16 @@ interface DynamisErrors {
     error InsufficientCost();
 
     /**
-     * @dev Indicates a failure with the quantity if the quantity of tokens
-     * being minted in the premint phase is less than the minimum premint
-     * quantity.
-     */
-    error InsufficientPremintQuantity();
-
-    /**
      * @dev Indicates a failure with the reward if the reward is `0`.
      */
     error InsufficientReward();
+
+    /**
+     * @dev Indicates a failure with the quantity if the quantity of tokens
+     * being minted in the sale phase is less than the minimum sale mint
+     * quantity.
+     */
+    error InsufficientSaleMintQuantity();
 
     /**
      * @dev Indicates an error with the given argument address. For example,

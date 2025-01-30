@@ -17,12 +17,31 @@ interface IDynamis is IERC721A {
     /* ========================== TYPES ========================== */
 
     enum Phase {
-        PREMINT,
+        SALE,
+        WHITELIST,
         FIRST,
         SECOND,
         THIRD,
         FOURTH,
         FINAL
+    }
+
+    struct Timestamps {
+        /// @custom:member Timestamp at which a phase will start.
+        uint128 startTimestamp;
+        /// @custom:member Timestamp at which a phase will end.
+        uint128 endTimestamp;
+    }
+
+    struct Record {
+        /// @custom:member Timestamp at which a NFT was minted.
+        uint64 startTimestamp;
+        /// @custom:member Timestamp after which vesting will end.
+        uint64 vestingEndTimestamp;
+        /// @custom:member Timestamp after which reward generation will stop.
+        uint64 rewardingEndTimestamp;
+        /// @custom:member Timestamp at which a transfer was performed.
+        uint64 lastInteractedTimestamp;
     }
 
     struct DynamisParams {
@@ -36,8 +55,6 @@ interface IDynamis is IERC721A {
         uint64 reservedCap;
         /// @custom:member Cap on the number of NFTs for launch.
         uint64 launchCap;
-        /// @custom:member Start timestamp for launch.
-        uint256 launchStartTimestamp;
         /// @custom:member Address of the PAI3 token.
         IERC20 pai3;
         /// @custom:member Address of the treasury wallet.
@@ -49,22 +66,13 @@ interface IDynamis is IERC721A {
         /// @custom:member Base URI for computing the tokenURI.
         string baseURI;
         /// @custom:member Base costs for each phase.
-        uint256[6] phaseBaseCosts;
+        uint256[7] phaseBaseCosts;
+        /// @custom:member Start and end timestamps for each phase.
+        Timestamps[7] phaseTimestamps;
         /// @custom:member Addresses of the payment tokens.
         IERC20[] tokens;
         /// @custom:member Addresses of the price feeds.
         AggregatorV3Interface[] priceFeeds;
-    }
-
-    struct Record {
-        /// @custom:member Timestamp at which a NFT was minted.
-        uint64 startTimestamp;
-        /// @custom:member Timestamp after which vesting will end.
-        uint64 vestingEndTimestamp;
-        /// @custom:member Timestamp after which reward generation will stop.
-        uint64 rewardingEndTimestamp;
-        /// @custom:member Timestamp at which a transfer was performed.
-        uint64 lastInteractedTimestamp;
     }
 
     /* ========================== EVENTS ========================== */
@@ -116,25 +124,32 @@ interface IDynamis is IERC721A {
 
     /**
      * @notice Safely mints `quantity` NFTs and transfers them to `to`.
-     * NOTE: Only owner can call this function.
+     * NOTE: Only owner can call this function. Mints NFTs that are reserved.
      * @param to Address to receive the NFTS.
      * @param quantity Amount of NFTs to mint.
      */
     function safeMint(address to, uint256 quantity) external;
 
     /**
+     * @notice Safely mints `quantity` NFTs and transfers them to `to`.
+     * NOTE: Only owner can call this function. Mints NFTs for the sale phase.
+     * @param to Address to receive the NFTS.
+     * @param quantity Amount of NFTs to mint.
+     */
+    function safeMintSale(address to, uint256 quantity) external;
+
+    /**
      * @notice Mints `quantity` NFTs at a discount and transfers them to the
      * caller.
      * NOTE: Payable value must be given. Only accepts Eth as a payment method.
+     * Mints NFTs for the whitelist phase.
      * @param quantity Amount of NFTs to mint.
-     * @param discountBaseCost Discounted base cost for a NFT.
      * @param deadline Expiration deadline for the signed message.
      * @param signature Signed message to determine correctness in the case of a
      * discount.
      */
-    function discountMintWithEth(
+    function mintWhitelistWithEth(
         uint256 quantity,
-        uint256 discountBaseCost,
         uint256 deadline,
         bytes memory signature
     ) external payable;
@@ -142,18 +157,17 @@ interface IDynamis is IERC721A {
     /**
      * @notice Mints `quantity` NFTs at a discount and transfers them to the
      * caller.
-     * NOTE: Only accepts `token` if it is registered as a payment method.
+     * NOTE: Only accepts `token` if it is registered as a payment method. Mints
+     * NFTs for the whitelist phase.
      * @param token Registered payment method.
      * @param quantity Amount of NFTs to mint.
-     * @param discountBaseCost Discounted base cost for a NFT.
      * @param deadline Expiration deadline for the signed message.
      * @param signature Signed message to determine correctness in the case of a
      * discount.
      */
-    function discountMint(
+    function mintWhitelist(
         IERC20 token,
         uint256 quantity,
-        uint256 discountBaseCost,
         uint256 deadline,
         bytes memory signature
     ) external;
@@ -259,11 +273,6 @@ interface IDynamis is IERC721A {
     function LAUNCH_CAP() external view returns (uint64);
 
     /**
-     * @notice Start timestamp for launch.
-     */
-    function LAUNCH_START_TIMESTAMP() external view returns (uint256);
-
-    /**
      * @notice Address of the PAI3 token.
      */
     function PAI3() external view returns (IERC20);
@@ -297,14 +306,18 @@ interface IDynamis is IERC721A {
     /**
      * @notice Base costs for each phase.
      * @param index Unique identifier for each phase.
+     * @return baseCost Base cost of a NFT in the given phase.
      */
     function phaseBaseCosts(uint256 index) external view returns (uint256);
 
     /**
-     * @notice End timestamps for each phase.
+     * @notice Start and end timestamps for each phase.
      * @param index Unique identifier for each phase.
+     * @return timestamps Start and end timestamps in the given phase.
      */
-    function phaseEndTimestamps(uint256 index) external view returns (uint256);
+    function phaseTimestamps(
+        uint256 index
+    ) external view returns (uint128, uint128);
 
     /**
      * @notice Due rewards relevant to an `account`.
