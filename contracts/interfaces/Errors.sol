@@ -7,18 +7,6 @@ pragma solidity 0.8.28;
  */
 interface DynamisErrors {
     /**
-     * @dev Indicates a failure with the phase if the phase is being bumped
-     * again.
-     */
-    error AlreadyBumpedPhase();
-
-    /**
-     * @dev Indicates a failure with the expiry if the expiry has not been
-     * crossed when a transfer or approval is performed.
-     */
-    error Vested();
-
-    /**
      * @dev Indicates a failure with the caller if the caller is not the owner
      * of a tokenId.
      */
@@ -29,6 +17,17 @@ interface DynamisErrors {
      * exceeds the cap.
      */
     error ExceededCap();
+
+    /**
+     * @dev Indicates a failure with the launch if the launch has ended.
+     */
+    error LaunchEnded();
+
+    /**
+     * @dev Indicates a failure with the launch if the launch has not yet
+     * started.
+     */
+    error LaunchNotStarted();
 
     /**
      * @dev Indicates a failure with the token if the token is not registered as
@@ -47,6 +46,13 @@ interface DynamisErrors {
      * than the base cost for a single token.
      */
     error InsufficientCost();
+
+    /**
+     * @dev Indicates a failure with the quantity if the quantity of tokens
+     * being minted in the premint phase is less than the minimum premint
+     * quantity.
+     */
+    error InsufficientPremintQuantity();
 
     /**
      * @dev Indicates a failure with the reward if the reward is `0`.
@@ -83,18 +89,6 @@ interface DynamisErrors {
     error InvalidAssignment();
 
     /**
-     * @dev Indicates an error in the given argument cap. That is,
-     * `cap > type(uint24).max`.
-     */
-    error InvalidCap();
-
-    /**
-     * @dev Indicates an error in the given argument initial cap. That is,
-     * `initialCap_ >= cap_`.
-     */
-    error InvalidInitialCap();
-
-    /**
      * @dev Indicates an error with the given argument payable value. For
      * example, `0`.
      */
@@ -117,4 +111,10 @@ interface DynamisErrors {
      * been seen at least once.
      */
     error SignatureAlreadySeen();
+
+    /**
+     * @dev Indicates a failure with the expiry if the expiry has not been
+     * crossed when a transfer or approval is performed.
+     */
+    error Vested();
 }

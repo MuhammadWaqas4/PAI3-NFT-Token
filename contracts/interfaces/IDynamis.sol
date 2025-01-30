@@ -22,7 +22,7 @@ interface IDynamis is IERC721A {
         SECOND,
         THIRD,
         FOURTH,
-        FIFTH
+        FINAL
     }
 
     struct DynamisParams {
@@ -32,22 +32,24 @@ interface IDynamis is IERC721A {
         string name;
         /// @custom:member Token collection symbol.
         string symbol;
-        /// @custom:member Base cost for a single token.
-        uint256 baseCostSingle;
-        /// @custom:member Cap on the number of minted tokens initially.
-        uint256 initialCap;
-        /// @custom:member Cap on the number of minted tokens.
-        uint256 cap;
+        /// @custom:member Cap on the number of reserved NFTs.
+        uint64 reservedCap;
+        /// @custom:member Cap on the number of NFTs for launch.
+        uint64 launchCap;
         /// @custom:member Address of the PAI3 token.
         IERC20 pai3;
         /// @custom:member Address of the treasury wallet.
         address treasuryWallet;
         /// @custom:member Address of the reward wallet.
         address rewardWallet;
+        /// @custom:member End timestamps for each phase.
+        uint256 launchStartTimestamp;
         /// @custom:member Address of the signature signer.
         address signer;
         /// @custom:member Base URI for computing the tokenURI.
         string baseURI;
+        /// @custom:member Base costs for each phase.
+        uint256[6] phaseBaseCosts;
         /// @custom:member Addresses of the payment tokens.
         IERC20[] tokens;
         /// @custom:member Addresses of the price feeds.
@@ -55,7 +57,7 @@ interface IDynamis is IERC721A {
     }
 
     struct Record {
-        /// @custom:member Timestamp at which a token was minted.
+        /// @custom:member Timestamp at which a NFT was minted.
         uint64 startTimestamp;
         /// @custom:member Timestamp after which vesting will end.
         uint64 vestingEndTimestamp;
@@ -113,40 +115,63 @@ interface IDynamis is IERC721A {
     /* ========================== FUNCTIONS ========================== */
 
     /**
-     * @notice Mints NFTs with the amount of `quantity` and transfers them to
-     * `caller`.
-     * NOTE: Payable value must be given. Only accepts ETH as a payment method.
+     * @notice Safely mints `quantity` NFTs and transfers them to `to`.
+     * NOTE: Only owner can call this function.
+     * @param to Address to receive the NFTS.
      * @param quantity Amount of NFTs to mint.
-     * @param discountCostSingle Discounted base cost for a single token.
+     */
+    function safeMint(address to, uint256 quantity) external;
+
+    /**
+     * @notice Mints `quantity` NFTs at a discount and transfers them to the
+     * caller.
+     * NOTE: Payable value must be given. Only accepts Eth as a payment method.
+     * @param quantity Amount of NFTs to mint.
+     * @param discountBaseCost Discounted base cost for a NFT.
      * @param deadline Expiration deadline for the signed message.
      * @param signature Signed message to determine correctness in the case of a
      * discount.
      */
-    function mintWithETH(
+    function discountMintWithEth(
         uint256 quantity,
-        uint256 discountCostSingle,
+        uint256 discountBaseCost,
         uint256 deadline,
         bytes memory signature
     ) external payable;
 
     /**
-     * @notice Mints NFTs with the amount of `quantity` and transfers them to
-     * `caller`.
+     * @notice Mints `quantity` NFTs at a discount and transfers them to the
+     * caller.
      * NOTE: Only accepts `token` if it is registered as a payment method.
      * @param token Registered payment method.
      * @param quantity Amount of NFTs to mint.
-     * @param discountCostSingle Discounted base cost for a single token.
+     * @param discountBaseCost Discounted base cost for a NFT.
      * @param deadline Expiration deadline for the signed message.
      * @param signature Signed message to determine correctness in the case of a
      * discount.
      */
-    function mint(
+    function discountMint(
         IERC20 token,
         uint256 quantity,
-        uint256 discountCostSingle,
+        uint256 discountBaseCost,
         uint256 deadline,
         bytes memory signature
     ) external;
+
+    /**
+     * @notice Mints `quantity` NFTs and transfers them to the caller.
+     * NOTE: Payable value must be given. Only accepts Eth as a payment method.
+     * @param quantity Amount of NFTs to mint.
+     */
+    function mintWithEth(uint256 quantity) external payable;
+
+    /**
+     * @notice Mints `quantity` NFTs and transfers them to the caller.
+     * NOTE: Only accepts `token` if it is registered as a payment method.
+     * @param token Registered payment method.
+     * @param quantity Amount of NFTs to mint.
+     */
+    function mint(IERC20 token, uint256 quantity) external;
 
     /**
      * @notice Transfers rewards collected by the user relevant to a `tokenId`.
@@ -159,13 +184,6 @@ interface IDynamis is IERC721A {
         uint256 deadline,
         bytes memory signature
     ) external;
-
-    /**
-     * @notice Bumps the phase after the first phase has ended and changes the
-     * state of the contract from paused to unpaused.
-     * NOTE: Only owner can call this function. Can only be called when paused.
-     */
-    function bumpPhase() external;
 
     /**
      * @notice Change the state of the contract from unpaused to paused.
@@ -207,12 +225,21 @@ interface IDynamis is IERC721A {
     ) external;
 
     /**
-     * @notice Vesting duration in seconds.
+     * @notice Time based records relevant to a `tokenId`.
+     * @param tokenId Unique identifier of the NFT.
+     * @return record Complete time based record of the NFT.
+     */
+    function tokenRecords(
+        uint256 tokenId
+    ) external view returns (Record memory);
+
+    /**
+     * @notice Vesting duration in seconds, that is, 1 year time.
      */
     function VESTING_DURATION() external view returns (uint64);
 
     /**
-     * @notice Reward duration in seconds.
+     * @notice Reward duration in seconds, that is, 3 years time.
      */
     function REWARD_DURATION() external view returns (uint64);
 
@@ -222,9 +249,14 @@ interface IDynamis is IERC721A {
     function REWARD_PER_SECOND() external view returns (uint256);
 
     /**
-     * @notice Base cost for a single token.
+     * @notice Cap on the number of reserved NFTs.
      */
-    function BASE_COST_SINGLE() external view returns (uint256);
+    function RESERVED_CAP() external view returns (uint64);
+
+    /**
+     * @notice Cap on the number of NFTs for launch.
+     */
+    function LAUNCH_CAP() external view returns (uint64);
 
     /**
      * @notice Address of the PAI3 token.
@@ -242,34 +274,37 @@ interface IDynamis is IERC721A {
     function REWARD_WALLET() external view returns (address);
 
     /**
+     * @notice Number of reserved NFTs minted.
+     */
+    function reservedMinted() external view returns (uint256);
+
+    /**
+     * @notice Start timestamp for NFT launch.
+     */
+    function launchStartTimestamp() external view returns (uint256);
+
+    /**
      * @notice Address of the signature signer.
      */
     function signer() external view returns (address);
 
     /**
      * @notice Base URI for computing tokenURI. If set, the resulting URI for
-     * each token will be the concatenation of the base URI and the tokenId.
+     * each NFT will be the concatenation of the base URI and the tokenId.
      */
     function baseURI() external view returns (string memory);
 
     /**
-     * @notice Current phase.
+     * @notice Base costs for each phase.
+     * @param index Unique identifier for each phase.
      */
-    function phase() external view returns (Phase);
+    function phaseBaseCosts(uint256 index) external view returns (uint256);
 
     /**
-     * @notice Cap on the token's totalSupply.
+     * @notice End timestamps for each phase.
+     * @param index Unique identifier for each phase.
      */
-    function cap() external view returns (uint256);
-
-    /**
-     * @notice Time based records relevant to a `tokenId`.
-     * @param tokenId Unique identifier of the NFT.
-     * @return record Complete time based record of the NFT.
-     */
-    function tokenRecords(
-        uint256 tokenId
-    ) external view returns (Record memory);
+    function phaseEndTimestamps(uint256 index) external view returns (uint256);
 
     /**
      * @notice Due rewards relevant to an `account`.

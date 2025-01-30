@@ -11,7 +11,7 @@
         "deploy-staging": "hardhat run scripts/deploy.js --network staging",
         "deploy-tokens": "hardhat run scripts/deploy-tokens.js",
         "deploy-tokens-staging": "hardhat run scripts/deploy-tokens.js --network staging",
-        "format": "prettier --check --write .prettierrc *.json {contracts,test}/**/*.sol {,scripts/}*.js",
+        "format": "prettier --check --write .prettierrc *.json *.js {contracts,test}/**/*.sol scripts/*.js",
         "test": "forge test",
         "test-force": "forge build --force && forge test",
         "test-log": "forge test -vv",
