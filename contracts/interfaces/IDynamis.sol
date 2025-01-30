@@ -36,14 +36,14 @@ interface IDynamis is IERC721A {
         uint64 reservedCap;
         /// @custom:member Cap on the number of NFTs for launch.
         uint64 launchCap;
+        /// @custom:member Start timestamp for launch.
+        uint256 launchStartTimestamp;
         /// @custom:member Address of the PAI3 token.
         IERC20 pai3;
         /// @custom:member Address of the treasury wallet.
         address treasuryWallet;
         /// @custom:member Address of the reward wallet.
         address rewardWallet;
-        /// @custom:member End timestamps for each phase.
-        uint256 launchStartTimestamp;
         /// @custom:member Address of the signature signer.
         address signer;
         /// @custom:member Base URI for computing the tokenURI.
@@ -259,6 +259,11 @@ interface IDynamis is IERC721A {
     function LAUNCH_CAP() external view returns (uint64);
 
     /**
+     * @notice Start timestamp for launch.
+     */
+    function LAUNCH_START_TIMESTAMP() external view returns (uint256);
+
+    /**
      * @notice Address of the PAI3 token.
      */
     function PAI3() external view returns (IERC20);
@@ -277,11 +282,6 @@ interface IDynamis is IERC721A {
      * @notice Number of reserved NFTs minted.
      */
     function reservedMinted() external view returns (uint256);
-
-    /**
-     * @notice Start timestamp for NFT launch.
-     */
-    function launchStartTimestamp() external view returns (uint256);
 
     /**
      * @notice Address of the signature signer.

@@ -15,10 +15,10 @@ async function main() {
     const symbol = process.env.SYMBOL;
     const reservedCap = process.env.RESERVED_CAP;
     const launchCap = process.env.LAUNCH_CAP;
+    const launchTimestamp = process.env.LAUNCH_START_TIMESTAMP;
     const pai3Address = process.env.PAI3_ADDRESS;
     const treasuryWalletAddress = process.env.TREASURY_WALLET_ADDRESS;
     const rewardWalletAddress = process.env.REWARD_WALLET_ADDRESS;
-    const launchTimestamp = process.env.LAUNCH_START_TIMESTAMP;
     const signerAddress = process.env.SIGNER_ADDRESS;
     const baseURI = process.env.BASE_URI;
     const phaseBaseCosts = process.env.PHASE_BASE_COSTS.split("|");
@@ -33,10 +33,10 @@ async function main() {
             symbol: symbol,
             reservedCap: reservedCap,
             launchCap: launchCap,
+            launchStartTimestamp: launchTimestamp,
             pai3: pai3Address,
             treasuryWallet: treasuryWalletAddress,
             rewardWallet: rewardWalletAddress,
-            launchStartTimestamp: launchTimestamp,
             signer: signerAddress,
             baseURI: baseURI,
             phaseBaseCosts: phaseBaseCosts,

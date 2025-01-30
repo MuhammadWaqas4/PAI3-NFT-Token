@@ -56,6 +56,9 @@ contract Dynamis is Ownable2Step, Pausable, ERC721A, DynamisErrors, IDynamis {
     uint64 public immutable LAUNCH_CAP;
 
     /// @inheritdoc IDynamis
+    uint256 public immutable LAUNCH_START_TIMESTAMP;
+
+    /// @inheritdoc IDynamis
     IERC20 public immutable PAI3;
 
     /// @inheritdoc IDynamis
@@ -69,9 +72,6 @@ contract Dynamis is Ownable2Step, Pausable, ERC721A, DynamisErrors, IDynamis {
 
     /// @inheritdoc IDynamis
     uint256 public reservedMinted;
-
-    /// @inheritdoc IDynamis
-    uint256 public launchStartTimestamp;
 
     /// @inheritdoc IDynamis
     address public signer;
@@ -134,7 +134,7 @@ contract Dynamis is Ownable2Step, Pausable, ERC721A, DynamisErrors, IDynamis {
 
         RESERVED_CAP = params_.reservedCap;
         LAUNCH_CAP = params_.launchCap;
-        launchStartTimestamp = params_.launchStartTimestamp;
+        LAUNCH_START_TIMESTAMP = params_.launchStartTimestamp;
 
         PAI3 = params_.pai3;
         TREASURY_WALLET = params_.treasuryWallet;
@@ -530,7 +530,7 @@ contract Dynamis is Ownable2Step, Pausable, ERC721A, DynamisErrors, IDynamis {
      * @param quantity Amount of NFTs to mint.
      */
     function _processPhase(uint256 quantity) private {
-        if (block.timestamp <= launchStartTimestamp) {
+        if (block.timestamp <= LAUNCH_START_TIMESTAMP) {
             _revert(LaunchNotStarted.selector);
         }
 
