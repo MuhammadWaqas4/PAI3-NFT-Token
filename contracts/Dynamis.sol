@@ -112,13 +112,13 @@ contract Dynamis is Ownable2Step, Pausable, ERC721A, DynamisErrors, IDynamis {
             _revert(InvalidAddress.selector);
         }
 
-        uint256 length = params_.tokens.length;
+        uint256 tokensLength = params_.tokens.length;
 
-        if (length == 0) {
+        if (tokensLength == 0) {
             _revert(InvalidArrayLength.selector);
         }
 
-        if (length != params_.priceFeeds.length) {
+        if (tokensLength != params_.priceFeeds.length) {
             _revert(InvalidArrayArity.selector);
         }
 
@@ -138,7 +138,7 @@ contract Dynamis is Ownable2Step, Pausable, ERC721A, DynamisErrors, IDynamis {
         _updateSigner(params_.signer);
         _setBaseURI(params_.baseURI);
 
-        for (uint256 i; i < length; ++i) {
+        for (uint256 i; i < tokensLength; ++i) {
             _updatePriceFeed(params_.tokens[i], params_.priceFeeds[i]);
         }
     }
