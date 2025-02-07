@@ -14,6 +14,7 @@ async function main() {
     const name = process.env.NAME;
     const symbol = process.env.SYMBOL;
     const reservedCap = process.env.RESERVED_CAP;
+    const firstPhaseCap = process.env.FIRST_PHASE_CAP;
     const cap = process.env.CAP;
     const pai3Address = process.env.PAI3_ADDRESS;
     const treasuryWalletAddress = process.env.TREASURY_WALLET_ADDRESS;
@@ -36,27 +37,26 @@ async function main() {
 
         return result;
     });
-    const dynamisParams = [
-        {
-            owner: ownerAddress,
-            name: name,
-            symbol: symbol,
-            reservedCap: reservedCap,
-            cap: cap,
-            pai3: pai3Address,
-            treasuryWallet: treasuryWalletAddress,
-            rewardWallet: rewardWalletAddress,
-            signer: signerAddress,
-            baseURI: baseURI,
-            phaseBaseCosts: phaseBaseCosts,
-            phaseTimestamps: phaseTimestamps,
-            tokens: tokenAddresses,
-            priceFeeds: priceFeedAddresses
-        }
-    ];
+    const dynamisParams = {
+        owner: ownerAddress,
+        name: name,
+        symbol: symbol,
+        reservedCap: reservedCap,
+        firstPhaseCap: firstPhaseCap,
+        cap: cap,
+        pai3: pai3Address,
+        treasuryWallet: treasuryWalletAddress,
+        rewardWallet: rewardWalletAddress,
+        signer: signerAddress,
+        baseURI: baseURI,
+        phaseBaseCosts: phaseBaseCosts,
+        phaseTimestamps: phaseTimestamps,
+        tokens: tokenAddresses,
+        priceFeeds: priceFeedAddresses
+    };
 
     // Deploying collections.
-    const dynamisAddress = await deploy("Dynamis", dynamisParams);
+    const dynamisAddress = await deploy("Dynamis", [dynamisParams]);
 
     // Setting up collections.
     if (networkName === "staging" || networkName === "hardhat") {
@@ -72,7 +72,7 @@ async function main() {
     await new Promise((resolve) => setTimeout(resolve, 60000));
 
     // Verifying collections.
-    await verify(dynamisAddress, dynamisParams);
+    await verify(dynamisAddress, [dynamisParams]);
 
     // Exiting.
     process.exit();

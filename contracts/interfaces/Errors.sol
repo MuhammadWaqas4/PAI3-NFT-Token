@@ -19,21 +19,23 @@ interface DynamisErrors {
     error ExceededCap();
 
     /**
-     * @dev Indicates a failure with the launch if the launch has ended.
-     */
-    error LaunchEnded();
-
-    /**
      * @dev Indicates a failure with the launch if the launch has not yet
      * started.
      */
-    error LaunchNotStarted();
+    error LaunchInactive();
 
     /**
      * @dev Indicates a failure with the launch if the launch is in between
      * phases and hence is on hold.
      */
     error LaunchOnHold();
+
+    /**
+     * @dev Indicates a failure with the quantity if the quantity of tokens
+     * being minted for node minting in the start phase is not divisible by
+     * node mint multiplier.
+     */
+    error IncorrectNodeMintQuantity();
 
     /**
      * @dev Indicates a failure with the token if the token is not registered as
@@ -54,16 +56,14 @@ interface DynamisErrors {
     error InsufficientCost();
 
     /**
+     * @dev Indicates a failure with the quantity if the quantity is `0`.
+     */
+    error InsufficientQuantity();
+
+    /**
      * @dev Indicates a failure with the reward if the reward is `0`.
      */
     error InsufficientReward();
-
-    /**
-     * @dev Indicates a failure with the quantity if the quantity of tokens
-     * being minted in the sale phase is less than the minimum sale mint
-     * quantity.
-     */
-    error InsufficientSaleMintQuantity();
 
     /**
      * @dev Indicates an error with the given argument address. For example,
@@ -105,6 +105,12 @@ interface DynamisErrors {
      * `""`.
      */
     error InvalidString();
+
+    /**
+     * @dev Indicates a failure with the phase if the phase being requested is
+     * not currently active.
+     */
+    error PhaseInactive();
 
     /**
      * @dev Indicates a failure with the deadline if the deadline has been

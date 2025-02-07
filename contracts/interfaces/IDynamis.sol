@@ -17,8 +17,6 @@ interface IDynamis is IERC721A {
     /* ========================== TYPES ========================== */
 
     enum Phase {
-        SALE,
-        WHITELIST,
         FIRST,
         SECOND,
         THIRD,
@@ -52,9 +50,11 @@ interface IDynamis is IERC721A {
         /// @custom:member Token collection symbol.
         string symbol;
         /// @custom:member Cap on the number of reserved NFTs minted.
-        uint64 reservedCap;
+        uint256 reservedCap;
+        /// @custom:member Cap on the number of NFTs minted in the first phase.
+        uint256 firstPhaseCap;
         /// @custom:member Cap on the number of NFTs minted for all phases.
-        uint64 cap;
+        uint256 cap;
         /// @custom:member Address of the PAI3 token.
         IERC20 pai3;
         /// @custom:member Address of the treasury wallet.
@@ -66,9 +66,9 @@ interface IDynamis is IERC721A {
         /// @custom:member Base URI for computing the tokenURI.
         string baseURI;
         /// @custom:member Base costs for each phase.
-        uint256[7] phaseBaseCosts;
+        uint256[6] phaseBaseCosts;
         /// @custom:member Start and end timestamps for each phase.
-        Timestamps[7] phaseTimestamps;
+        Timestamps[6] phaseTimestamps;
         /// @custom:member Addresses of the payment tokens.
         IERC20[] tokens;
         /// @custom:member Addresses of the price feeds.
@@ -108,7 +108,12 @@ interface IDynamis is IERC721A {
     /**
      * @dev Emitted when baseURI is changed to `newBaseURI` from `oldBaseURI`.
      */
-    event SetBaseURI(string newBaseURI, string oldBaseURI);
+    event UpdateBaseURI(string newBaseURI, string oldBaseURI);
+
+    /**
+     * @dev Emitted when phase timestamps are set.
+     */
+    event SetPhaseTimestamps(Phase phase, Timestamps timestamps);
 
     /**
      * @dev Emitted when the price feed of a `token` is changed to
@@ -131,22 +136,42 @@ interface IDynamis is IERC721A {
     function safeMint(address to, uint256 quantity) external;
 
     /**
-     * @notice Safely mints `quantity` NFTs and transfers them to `to`.
-     * NOTE: Only owner can call this function. Mints NFTs for the sale phase.
-     * @param to Address to receive the NFTS.
-     * @param quantity Amount of NFTs to mint.
-     */
-    function safeMintSale(address to, uint256 quantity) external;
-
-    /**
-     * @notice Mints `quantity` NFTs at a discount and transfers them to the
-     * caller.
+     * @notice Mints `quantity` NFTs and transfers them to the caller.
      * NOTE: Payable value must be given. Only accepts Eth as a payment method.
-     * Mints NFTs for the whitelist phase.
+     * Mints NFTs for the start phase.
      * @param quantity Amount of NFTs to mint.
      * @param deadline Expiration deadline for the signed message.
-     * @param signature Signed message to determine correctness in the case of a
-     * discount.
+     * @param signature Signed message to determine correctness.
+     */
+    function mintNodeWithEth(
+        uint256 quantity,
+        uint256 deadline,
+        bytes memory signature
+    ) external payable;
+
+    /**
+     * @notice Mints `quantity` NFTs and transfers them to the caller.
+     * NOTE: Only accepts `token` if it is registered as a payment method. Mints
+     * NFTs for the start phase.
+     * @param token Registered payment method.
+     * @param quantity Amount of NFTs to mint.
+     * @param deadline Expiration deadline for the signed message.
+     * @param signature Signed message to determine correctness.
+     */
+    function mintNode(
+        IERC20 token,
+        uint256 quantity,
+        uint256 deadline,
+        bytes memory signature
+    ) external;
+
+    /**
+     * @notice Mints `quantity` NFTs and transfers them to the caller.
+     * NOTE: Payable value must be given. Only accepts Eth as a payment method.
+     * Mints NFTs for the start phase.
+     * @param quantity Amount of NFTs to mint.
+     * @param deadline Expiration deadline for the signed message.
+     * @param signature Signed message to determine correctness.
      */
     function mintWhitelistWithEth(
         uint256 quantity,
@@ -155,15 +180,13 @@ interface IDynamis is IERC721A {
     ) external payable;
 
     /**
-     * @notice Mints `quantity` NFTs at a discount and transfers them to the
-     * caller.
+     * @notice Mints `quantity` NFTs and transfers them to the caller.
      * NOTE: Only accepts `token` if it is registered as a payment method. Mints
-     * NFTs for the whitelist phase.
+     * NFTs for the start phase.
      * @param token Registered payment method.
      * @param quantity Amount of NFTs to mint.
      * @param deadline Expiration deadline for the signed message.
-     * @param signature Signed message to determine correctness in the case of a
-     * discount.
+     * @param signature Signed message to determine correctness.
      */
     function mintWhitelist(
         IERC20 token,
@@ -222,11 +245,24 @@ interface IDynamis is IERC721A {
     function updateSigner(address newSigner) external;
 
     /**
-     * @notice Sets the value for base URI.
+     * @notice Updates the value for base URI.
      * NOTE: Only owner can call this function.
-     * @param newBaseURI Value to set the base URI to.
+     * @param newBaseURI New base URI.
      */
-    function setBaseURI(string memory newBaseURI) external;
+    function updateBaseURI(string memory newBaseURI) external;
+
+    /**
+     * @notice Sets the `timestamps` of a given `phase`.
+     * NOTE: Only owner can call this function.
+     * @param phase Phase of the launch.
+     * @param timestamps Timestamps to set for the given launch phase.
+     * @param setPhase Whether to hard set the phase or not.
+     */
+    function setPhaseTimestamps(
+        Phase phase,
+        Timestamps memory timestamps,
+        bool setPhase
+    ) external;
 
     /**
      * @notice Adds, removes or updates the `priceFeed` of a given `token`.
@@ -267,12 +303,17 @@ interface IDynamis is IERC721A {
     /**
      * @notice Cap on the number of reserved NFTs minted.
      */
-    function RESERVED_CAP() external view returns (uint64);
+    function RESERVED_CAP() external view returns (uint256);
+
+    /**
+     * @notice Cap on the number of NFTs minted in the first phase.
+     */
+    function FIRST_PHASE_CAP() external view returns (uint256);
 
     /**
      * @notice Cap on the number of NFTs minted for all phases.
      */
-    function CAP() external view returns (uint64);
+    function CAP() external view returns (uint256);
 
     /**
      * @notice Address of the PAI3 token.
@@ -293,6 +334,11 @@ interface IDynamis is IERC721A {
      * @notice Number of reserved NFTs minted.
      */
     function reservedMinted() external view returns (uint256);
+
+    /**
+     * @notice Number of NFTs minted in the first phase.
+     */
+    function firstPhaseMinted() external view returns (uint256);
 
     /**
      * @notice Address of the signature signer.
