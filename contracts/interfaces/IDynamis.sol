@@ -16,15 +16,32 @@ import { IERC721A } from "erc721a/contracts/IERC721A.sol";
 interface IDynamis is IERC721A {
     /* ========================== TYPES ========================== */
 
+    enum Sale {
+        NODE,
+        WHITELIST
+    }
+
     enum Phase {
-        FIRST,
+        START,
         SECOND,
         THIRD,
         FOURTH,
-        FINAL
+        END
     }
 
-    struct Timestamps {
+    enum Scenario {
+        RESERVED,
+        FIRST_PHASE
+    }
+
+    struct Cap {
+        /// @custom:member Cap on the number of NFTs minted.
+        uint128 cap;
+        /// @custom:member Number of NFTs minted.
+        uint128 minted;
+    }
+
+    struct Window {
         /// @custom:member Timestamp at which a phase will start.
         uint128 startTimestamp;
         /// @custom:member Timestamp at which a phase will end.
@@ -49,11 +66,7 @@ interface IDynamis is IERC721A {
         string name;
         /// @custom:member Token collection symbol.
         string symbol;
-        /// @custom:member Cap on the number of reserved NFTs minted.
-        uint256 reservedCap;
-        /// @custom:member Cap on the number of NFTs minted in the first phase.
-        uint256 firstPhaseCap;
-        /// @custom:member Cap on the number of NFTs minted for all phases.
+        /// @custom:member Cap on the number of NFTs minted.
         uint256 cap;
         /// @custom:member Address of the PAI3 token.
         IERC20 pai3;
@@ -63,12 +76,16 @@ interface IDynamis is IERC721A {
         address rewardWallet;
         /// @custom:member Address of the signature signer.
         address signer;
-        /// @custom:member Base URI for computing the tokenURI.
+        /// @custom:member Base URI for computing tokenURI.
         string baseURI;
-        /// @custom:member Base costs for each phase.
-        uint256[6] phaseBaseCosts;
-        /// @custom:member Start and end timestamps for each phase.
-        Timestamps[6] phaseTimestamps;
+        /// @custom:member Situational caps on the number of NFTs minted.
+        uint128[2] situationalCaps;
+        /// @custom:member Base costs for sales.
+        uint256[2] saleBaseCosts;
+        /// @custom:member Base costs for phases.
+        uint256[5] phaseBaseCosts;
+        /// @custom:member Duration windows for phases and sales.
+        Window[4] windows;
         /// @custom:member Addresses of the payment tokens.
         IERC20[] tokens;
         /// @custom:member Addresses of the price feeds.
@@ -111,9 +128,21 @@ interface IDynamis is IERC721A {
     event UpdateBaseURI(string newBaseURI, string oldBaseURI);
 
     /**
-     * @dev Emitted when phase timestamps are set.
+     * @dev Emitted when configuration of `sale` is changed to `newWindow` and
+     * `newBaseCost` from `oldWindow` and `oldBaseCost`.
      */
-    event SetPhaseTimestamps(Phase phase, Timestamps timestamps);
+    event UpdateSale(
+        Sale sale,
+        Window newWindow,
+        uint256 newBaseCost,
+        Window oldWindow,
+        uint256 oldBaseCost
+    );
+
+    /**
+     * @dev Emitted when `window` is set for `phase`.
+     */
+    event SetPhaseWindow(Phase phase, Window window);
 
     /**
      * @dev Emitted when the price feed of a `token` is changed to
@@ -129,7 +158,8 @@ interface IDynamis is IERC721A {
 
     /**
      * @notice Safely mints `quantity` NFTs and transfers them to `to`.
-     * NOTE: Only owner can call this function. Mints NFTs that are reserved.
+     * NOTE: Only owner can call this function. Mints reserved NFTs. Situational
+     * cap is applied for reserved NFTs.
      * @param to Address to receive the NFTS.
      * @param quantity Amount of NFTs to mint.
      */
@@ -138,67 +168,39 @@ interface IDynamis is IERC721A {
     /**
      * @notice Mints `quantity` NFTs and transfers them to the caller.
      * NOTE: Payable value must be given. Only accepts Eth as a payment method.
-     * Mints NFTs for the start phase.
+     * Mints NFTs for a sale.
      * @param quantity Amount of NFTs to mint.
      * @param deadline Expiration deadline for the signed message.
      * @param signature Signed message to determine correctness.
      */
-    function mintNodeWithEth(
+    function mintSaleWithEth(
         uint256 quantity,
         uint256 deadline,
+        Sale sale,
         bytes memory signature
     ) external payable;
 
     /**
      * @notice Mints `quantity` NFTs and transfers them to the caller.
      * NOTE: Only accepts `token` if it is registered as a payment method. Mints
-     * NFTs for the start phase.
+     * NFTs for a sale.
      * @param token Registered payment method.
      * @param quantity Amount of NFTs to mint.
      * @param deadline Expiration deadline for the signed message.
      * @param signature Signed message to determine correctness.
      */
-    function mintNode(
+    function mintSale(
         IERC20 token,
         uint256 quantity,
         uint256 deadline,
+        Sale sale,
         bytes memory signature
     ) external;
 
     /**
      * @notice Mints `quantity` NFTs and transfers them to the caller.
      * NOTE: Payable value must be given. Only accepts Eth as a payment method.
-     * Mints NFTs for the start phase.
-     * @param quantity Amount of NFTs to mint.
-     * @param deadline Expiration deadline for the signed message.
-     * @param signature Signed message to determine correctness.
-     */
-    function mintWhitelistWithEth(
-        uint256 quantity,
-        uint256 deadline,
-        bytes memory signature
-    ) external payable;
-
-    /**
-     * @notice Mints `quantity` NFTs and transfers them to the caller.
-     * NOTE: Only accepts `token` if it is registered as a payment method. Mints
-     * NFTs for the start phase.
-     * @param token Registered payment method.
-     * @param quantity Amount of NFTs to mint.
-     * @param deadline Expiration deadline for the signed message.
-     * @param signature Signed message to determine correctness.
-     */
-    function mintWhitelist(
-        IERC20 token,
-        uint256 quantity,
-        uint256 deadline,
-        bytes memory signature
-    ) external;
-
-    /**
-     * @notice Mints `quantity` NFTs and transfers them to the caller.
-     * NOTE: Payable value must be given. Only accepts Eth as a payment method.
-     * Mints NFTs for the regular phases.
+     * Mints NFTs for a phase. Situational cap is applied for first phase NFTs.
      * @param quantity Amount of NFTs to mint.
      */
     function mintWithEth(uint256 quantity) external payable;
@@ -206,7 +208,7 @@ interface IDynamis is IERC721A {
     /**
      * @notice Mints `quantity` NFTs and transfers them to the caller.
      * NOTE: Only accepts `token` if it is registered as a payment method. Mints
-     * NFTs for the regular phases.
+     * NFTs for a phase. Situational cap is applied for first phase NFTs.
      * @param token Registered payment method.
      * @param quantity Amount of NFTs to mint.
      */
@@ -245,24 +247,32 @@ interface IDynamis is IERC721A {
     function updateSigner(address newSigner) external;
 
     /**
-     * @notice Updates the value for base URI.
+     * @notice Updates the value of base URI.
      * NOTE: Only owner can call this function.
-     * @param newBaseURI New base URI.
+     * @param newBaseURI String of the new base URI.
      */
     function updateBaseURI(string memory newBaseURI) external;
 
     /**
-     * @notice Sets the `timestamps` of a given `phase`.
+     * @notice Updates the configuration of a given `sale`.
      * NOTE: Only owner can call this function.
-     * @param phase Phase of the launch.
-     * @param timestamps Timestamps to set for the given launch phase.
-     * @param setPhase Whether to hard set the phase or not.
+     * @param sale Unique identifier of the sale.
+     * @param newWindow Window to update for the given sale.
+     * @param newBaseCost Base cost to update for the given phase.
      */
-    function setPhaseTimestamps(
-        Phase phase,
-        Timestamps memory timestamps,
-        bool setPhase
+    function updateSale(
+        Sale sale,
+        Window memory newWindow,
+        uint256 newBaseCost
     ) external;
+
+    /**
+     * @notice Sets the `window` of a given `phase`.
+     * NOTE: Only owner can call this function.
+     * @param phase Unique identifier of the phase.
+     * @param window Window to set for the given phase.
+     */
+    function setPhaseWindow(Phase phase, Window memory window) external;
 
     /**
      * @notice Adds, removes or updates the `priceFeed` of a given `token`.
@@ -301,17 +311,7 @@ interface IDynamis is IERC721A {
     function REWARD_PER_SECOND() external view returns (uint256);
 
     /**
-     * @notice Cap on the number of reserved NFTs minted.
-     */
-    function RESERVED_CAP() external view returns (uint256);
-
-    /**
-     * @notice Cap on the number of NFTs minted in the first phase.
-     */
-    function FIRST_PHASE_CAP() external view returns (uint256);
-
-    /**
-     * @notice Cap on the number of NFTs minted for all phases.
+     * @notice Cap on the number of NFTs minted for phases and sales.
      */
     function CAP() external view returns (uint256);
 
@@ -331,16 +331,6 @@ interface IDynamis is IERC721A {
     function REWARD_WALLET() external view returns (address);
 
     /**
-     * @notice Number of reserved NFTs minted.
-     */
-    function reservedMinted() external view returns (uint256);
-
-    /**
-     * @notice Number of NFTs minted in the first phase.
-     */
-    function firstPhaseMinted() external view returns (uint256);
-
-    /**
      * @notice Address of the signature signer.
      */
     function signer() external view returns (address);
@@ -352,23 +342,52 @@ interface IDynamis is IERC721A {
     function baseURI() external view returns (string memory);
 
     /**
-     * @notice Base costs for each phase.
-     * @param index Unique identifier for each phase.
+     * @notice Recorded mint Supply given a specific scenario and a cap that is
+     * applied in that situation.
+     * @param index Unique identifier of the mint scenario.
+     * @return cap Cap on the number of NFTs minted in the given mint scenario.
+     * @return minted Number of NFTs minted in the given mint scenario.
+     */
+    function situationalCaps(
+        uint256 index
+    ) external view returns (uint128, uint128);
+
+    /**
+     * @notice Base cost for a sale.
+     * @param index Unique identifier of the sale.
+     * @return baseCost Base cost of a NFT in the given sale.
+     */
+    function saleBaseCosts(uint256 index) external view returns (uint256);
+
+    /**
+     * @notice Duration window for a sale.
+     * @param index Unique identifier of the sale.
+     * @return startTimestamp Start timestamp of the given sale.
+     * @return endTimestamp End timestamp of the given sale.
+     */
+    function saleWindows(
+        uint256 index
+    ) external view returns (uint128, uint128);
+
+    /**
+     * @notice Base cost for a phase.
+     * @param index Unique identifier of the phase.
      * @return baseCost Base cost of a NFT in the given phase.
      */
     function phaseBaseCosts(uint256 index) external view returns (uint256);
 
     /**
-     * @notice Start and end timestamps for each phase.
-     * @param index Unique identifier for each phase.
-     * @return timestamps Start and end timestamps in the given phase.
+     * @notice Duration window for a phase.
+     * @param index Unique identifier of the phase.
+     * @return startTimestamp Start timestamp of the given phase.
+     * @return endTimestamp End timestamp of the given phase.
      */
-    function phaseTimestamps(
+    function phaseWindows(
         uint256 index
     ) external view returns (uint128, uint128);
 
     /**
-     * @notice Due rewards relevant to an `account`.
+     * @notice Due rewards relevant to a `tokenId`.
      * @param tokenId Unique identifier of the NFT.
      * @return due Due rewards not yet claimed.
      */

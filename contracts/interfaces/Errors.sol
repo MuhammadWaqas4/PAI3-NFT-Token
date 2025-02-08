@@ -19,21 +19,9 @@ interface DynamisErrors {
     error ExceededCap();
 
     /**
-     * @dev Indicates a failure with the launch if the launch has not yet
-     * started.
-     */
-    error LaunchInactive();
-
-    /**
-     * @dev Indicates a failure with the launch if the launch is in between
-     * phases and hence is on hold.
-     */
-    error LaunchOnHold();
-
-    /**
      * @dev Indicates a failure with the quantity if the quantity of tokens
-     * being minted for node minting in the start phase is not divisible by
-     * node mint multiplier.
+     * being minted for node minting in the start phase is not divisible by node
+     * mint multiplier.
      */
     error IncorrectNodeMintQuantity();
 
@@ -108,21 +96,39 @@ interface DynamisErrors {
 
     /**
      * @dev Indicates a failure with the phase if the phase being requested is
+     * not currently accessible.
+     */
+    error PhaseInaccessible();
+
+    /**
+     * @dev Indicates a failure with the phase if the phase being requested is
      * not currently active.
      */
     error PhaseInactive();
+
+    /**
+     * @dev Indicates a failure with the phase if the phase is in between phases
+     * and hence is on hold.
+     */
+    error PhaseOnHold();
+
+    /**
+     * @dev Indicates a failure with the sale if the sale being requested is not
+     * currently active.
+     */
+    error SaleInactive();
+
+    /**
+     * @dev Indicates a failure with the signature if the signature has already
+     * been used at least once.
+     */
+    error SignatureAlreadyUsed();
 
     /**
      * @dev Indicates a failure with the deadline if the deadline has been
      * crossed when a signature is verified.
      */
     error SignatureDeadlineCrossed();
-
-    /**
-     * @dev Indicates a failure with the signature if the signature has already
-     * been seen at least once.
-     */
-    error SignatureAlreadySeen();
 
     /**
      * @dev Indicates a failure with the expiry if the expiry has not been
