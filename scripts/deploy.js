@@ -13,21 +13,21 @@ async function main() {
     const ownerAddress = process.env.OWNER_ADDRESS;
     const name = process.env.NAME;
     const symbol = process.env.SYMBOL;
-    const reservedCap = process.env.RESERVED_CAP;
-    const firstPhaseCap = process.env.FIRST_PHASE_CAP;
     const cap = process.env.CAP;
     const pai3Address = process.env.PAI3_ADDRESS;
     const treasuryWalletAddress = process.env.TREASURY_WALLET_ADDRESS;
     const rewardWalletAddress = process.env.REWARD_WALLET_ADDRESS;
     const signerAddress = process.env.SIGNER_ADDRESS;
     const baseURI = process.env.BASE_URI;
+    const situationalCaps = process.env.SITUATIONAL_CAPS.split("|");
+    const saleBaseCosts = process.env.SALE_BASE_COSTS.split("|");
     const phaseBaseCosts = process.env.PHASE_BASE_COSTS.split("|");
-    const tempPhaseTimestamps = process.env.PHASE_TIMESTAMPS.split("|");
+    let windows = process.env.WINDOWS.split("|");
     const tokenAddresses = process.env.TOKEN_ADDRESSES.split("|");
     const priceFeedAddresses = process.env.PRICE_FEED_ADDRESSES.split("|");
 
     // Structuring deployment variables.
-    const phaseTimestamps = tempPhaseTimestamps.map((value) => {
+    windows = windows.map((value) => {
         const splitValue = value.split("~");
 
         const result = {
@@ -41,16 +41,16 @@ async function main() {
         owner: ownerAddress,
         name: name,
         symbol: symbol,
-        reservedCap: reservedCap,
-        firstPhaseCap: firstPhaseCap,
         cap: cap,
         pai3: pai3Address,
         treasuryWallet: treasuryWalletAddress,
         rewardWallet: rewardWalletAddress,
         signer: signerAddress,
         baseURI: baseURI,
+        situationalCaps: situationalCaps,
+        saleBaseCosts: saleBaseCosts,
         phaseBaseCosts: phaseBaseCosts,
-        phaseTimestamps: phaseTimestamps,
+        windows: windows,
         tokens: tokenAddresses,
         priceFeeds: priceFeedAddresses
     };

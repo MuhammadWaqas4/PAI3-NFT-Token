@@ -85,7 +85,7 @@ interface IDynamis is IERC721A {
         /// @custom:member Base costs for phases.
         uint256[5] phaseBaseCosts;
         /// @custom:member Duration windows for phases and sales.
-        Window[4] windows;
+        Window[3] windows;
         /// @custom:member Addresses of the payment tokens.
         IERC20[] tokens;
         /// @custom:member Addresses of the price feeds.
