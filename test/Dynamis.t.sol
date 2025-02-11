@@ -85,6 +85,12 @@ contract DynamisTest is ERC721Holder, TestHelper {
                 priceFeeds: priceFeeds
             })
         );
+
+        vm.startPrank(rewardWallet);
+
+        pai3.approve(address(dynamis), type(uint256).max);
+
+        vm.stopPrank();
     }
 
     /* ========================== RECEIVE ========================== */
@@ -292,9 +298,276 @@ contract DynamisTest is ERC721Holder, TestHelper {
             errorSelector: 0x0
         });
 
+        // Getting first phase cap.
+
         uint256 firstPhaseCap = situationalCaps[
             uint8(IDynamis.Scenario.FIRST_PHASE)
         ];
+
+        // Moving to first phase.
+
+        IDynamis.Window[] memory testWindows = new IDynamis.Window[](7);
+
+        uint8 phaseIndex = uint8(IDynamis.Phase.FIRST);
+        uint8 typeIndex = uint8(Type.FIRST);
+        testWindows[typeIndex] = windows[typeIndex];
+        vm.warp(testWindows[typeIndex].startTimestamp + 1);
+
+        // Minting.
+
+        params.quantity = firstPhaseCap;
+        params.costSingle = costSingleEth[typeIndex];
+        params.cost = params.quantity * params.costSingle;
+        params.token = _ETH;
+        params.errorSelector = 0x0;
+
+        _mintHelper(params);
+
+        // Setting next phase window with incorrect caller.
+
+        phaseIndex++;
+        typeIndex++;
+        testWindows[typeIndex] = IDynamis.Window({
+            startTimestamp: testWindows[typeIndex - 1].endTimestamp,
+            endTimestamp: testWindows[typeIndex - 1].endTimestamp + 3 days
+        });
+
+        vm.expectRevert(
+            abi.encodeWithSelector(
+                Ownable.OwnableUnauthorizedAccount.selector,
+                address(this)
+            )
+        );
+        dynamis.setPhaseWindow(
+            IDynamis.Phase(phaseIndex),
+            testWindows[typeIndex]
+        );
+
+        // Setting next phase window.
+
+        vm.startPrank(owner);
+
+        dynamis.setPhaseWindow(
+            IDynamis.Phase(phaseIndex),
+            testWindows[typeIndex]
+        );
+
+        vm.stopPrank();
+
+        // Moving to next phase.
+
+        vm.warp(testWindows[typeIndex].startTimestamp + 1);
+
+        // Minting.
+
+        params.quantity = 1;
+        params.costSingle = costSingleUSDT[typeIndex];
+        params.cost = params.quantity * params.costSingle;
+        params.token = _USDT;
+        params.errorSelector = 0x0;
+
+        _mintHelper(params);
+
+        // Checking revert when exceeding cap.
+
+        params.quantity = cap - dynamis.totalSupply() + 1;
+        params.costSingle = costSingleEth[typeIndex];
+        params.cost = params.quantity * params.costSingle;
+        params.token = _ETH;
+        params.errorSelector = DynamisErrors.ExceededCap.selector;
+
+        _mintHelper(params);
+
+        // Setting next phase window.
+
+        phaseIndex++;
+        typeIndex++;
+        testWindows[typeIndex] = IDynamis.Window({
+            startTimestamp: testWindows[typeIndex - 1].endTimestamp,
+            endTimestamp: testWindows[typeIndex - 1].endTimestamp + 3 days
+        });
+
+        vm.startPrank(owner);
+
+        dynamis.setPhaseWindow(
+            IDynamis.Phase(phaseIndex),
+            testWindows[typeIndex]
+        );
+
+        vm.stopPrank();
+
+        // Moving to next phase.
+
+        vm.warp(testWindows[typeIndex].startTimestamp + 1);
+
+        // Minting.
+
+        params.quantity = 1;
+        params.costSingle = costSingleUSDT[typeIndex];
+        params.cost = params.quantity * params.costSingle;
+        params.token = _USDT;
+        params.errorSelector = 0x0;
+
+        _mintHelper(params);
+
+        // Checking revert when exceeding cap.
+
+        params.quantity = cap - dynamis.totalSupply() + 1;
+        params.costSingle = costSingleEth[typeIndex];
+        params.cost = params.quantity * params.costSingle;
+        params.token = _ETH;
+        params.errorSelector = DynamisErrors.ExceededCap.selector;
+
+        _mintHelper(params);
+
+        // Setting next phase window.
+
+        phaseIndex++;
+        typeIndex++;
+        testWindows[typeIndex] = IDynamis.Window({
+            startTimestamp: testWindows[typeIndex - 1].endTimestamp,
+            endTimestamp: testWindows[typeIndex - 1].endTimestamp + 3 days
+        });
+
+        vm.startPrank(owner);
+
+        dynamis.setPhaseWindow(
+            IDynamis.Phase(phaseIndex),
+            testWindows[typeIndex]
+        );
+
+        vm.stopPrank();
+
+        // Moving to next phase.
+
+        vm.warp(testWindows[typeIndex].startTimestamp + 1);
+
+        // Minting.
+
+        params.quantity = 1;
+        params.costSingle = costSingleUSDT[typeIndex];
+        params.cost = params.quantity * params.costSingle;
+        params.token = _USDT;
+        params.errorSelector = 0x0;
+
+        _mintHelper(params);
+
+        // Checking revert when exceeding cap.
+
+        params.quantity = cap - dynamis.totalSupply() + 1;
+        params.costSingle = costSingleEth[typeIndex];
+        params.cost = params.quantity * params.costSingle;
+        params.token = _ETH;
+        params.errorSelector = DynamisErrors.ExceededCap.selector;
+
+        _mintHelper(params);
+
+        // Setting next phase window.
+
+        phaseIndex++;
+        typeIndex++;
+        testWindows[typeIndex] = IDynamis.Window({
+            startTimestamp: testWindows[typeIndex - 1].endTimestamp,
+            endTimestamp: testWindows[typeIndex - 1].endTimestamp + 3 days
+        });
+
+        vm.startPrank(owner);
+
+        dynamis.setPhaseWindow(
+            IDynamis.Phase(phaseIndex),
+            testWindows[typeIndex]
+        );
+
+        vm.stopPrank();
+
+        // Moving to next phase.
+
+        vm.warp(testWindows[typeIndex].startTimestamp + 1);
+
+        // Minting.
+
+        params.quantity = 1;
+        params.costSingle = costSingleUSDT[typeIndex];
+        params.cost = params.quantity * params.costSingle;
+        params.token = _USDT;
+        params.errorSelector = 0x0;
+
+        _mintHelper(params);
+
+        // Checking revert when exceeding cap.
+
+        params.quantity = cap - dynamis.totalSupply() + 1;
+        params.costSingle = costSingleEth[typeIndex];
+        params.cost = params.quantity * params.costSingle;
+        params.token = _ETH;
+        params.errorSelector = DynamisErrors.ExceededCap.selector;
+
+        _mintHelper(params);
+    }
+
+    function test_SituationalCaps() external {
+        // Mint params.
+
+        MintParams memory params = MintParams({
+            quantity: 0,
+            costSingle: 0,
+            cost: 0,
+            caller: address(this),
+            token: IERC20(address(0)),
+            dynamis: dynamis,
+            errorSelector: 0x0
+        });
+
+        // Getting reserved cap.
+
+        uint256 reservedCap = situationalCaps[
+            uint8(IDynamis.Scenario.RESERVED)
+        ];
+
+        // Minting.
+
+        vm.startPrank(owner);
+
+        uint256 quantity = reservedCap / 2;
+
+        dynamis.safeMint(owner, quantity);
+
+        // Minting.
+
+        quantity = reservedCap % 2 == 0
+            ? (reservedCap / 2) - 1
+            : reservedCap / 2;
+
+        dynamis.safeMint(owner, quantity);
+
+        // Checking revert when exceeding initial cap.
+
+        quantity = 2;
+
+        vm.expectRevert(DynamisErrors.ExceededCap.selector);
+        dynamis.safeMint(owner, quantity);
+
+        quantity = reservedCap;
+
+        vm.expectRevert(DynamisErrors.ExceededCap.selector);
+        dynamis.safeMint(owner, quantity);
+
+        // Minting.
+
+        quantity = 1;
+
+        dynamis.safeMint(owner, quantity);
+
+        vm.stopPrank();
+
+        // Getting first phase cap.
+
+        uint256 firstPhaseCap = situationalCaps[
+            uint8(IDynamis.Scenario.FIRST_PHASE)
+        ];
+
+        // Moving to first phase.
+
         uint8 typeIndex = uint8(Type.FIRST);
         vm.warp(windows[typeIndex].startTimestamp + 1);
 
@@ -310,7 +583,9 @@ contract DynamisTest is ERC721Holder, TestHelper {
 
         // Minting.
 
-        params.quantity = (firstPhaseCap / 2) - 1;
+        params.quantity = firstPhaseCap % 2 == 0
+            ? (firstPhaseCap / 2) - 1
+            : firstPhaseCap / 2;
         params.costSingle = costSingleUSDT[typeIndex];
         params.cost = params.quantity * params.costSingle;
         params.token = _USDT;
@@ -346,80 +621,79 @@ contract DynamisTest is ERC721Holder, TestHelper {
 
         _mintHelper(params);
 
-        // Setting next phase window with incorrect caller.
+        // // Setting next phase window with incorrect caller.
 
-        uint128 secondPhaseStartTimestamp = windows[uint8(Type.FIRST)]
-            .endTimestamp;
-        uint128 secondPhaseEndTimestamp = secondPhaseStartTimestamp + 3 days;
+        // uint128 secondPhaseStartTimestamp = windows[uint8(Type.FIRST)]
+        //     .endTimestamp;
+        // uint128 secondPhaseEndTimestamp = secondPhaseStartTimestamp + 3 days;
 
-        vm.expectRevert(
-            abi.encodeWithSelector(
-                Ownable.OwnableUnauthorizedAccount.selector,
-                address(this)
-            )
-        );
-        dynamis.setPhaseWindow(
-            IDynamis.Phase.SECOND,
-            IDynamis.Window({
-                startTimestamp: secondPhaseStartTimestamp,
-                endTimestamp: secondPhaseEndTimestamp
-            })
-        );
+        // vm.expectRevert(
+        //     abi.encodeWithSelector(
+        //         Ownable.OwnableUnauthorizedAccount.selector,
+        //         address(this)
+        //     )
+        // );
+        // dynamis.setPhaseWindow(
+        //     IDynamis.Phase.SECOND,
+        //     IDynamis.Window({
+        //         startTimestamp: secondPhaseStartTimestamp,
+        //         endTimestamp: secondPhaseEndTimestamp
+        //     })
+        // );
 
-        // Setting next phase window.
+        // // Setting next phase window.
 
-        vm.startPrank(owner);
+        // vm.startPrank(owner);
 
-        dynamis.setPhaseWindow(
-            IDynamis.Phase.SECOND,
-            IDynamis.Window(secondPhaseStartTimestamp, secondPhaseEndTimestamp)
-        );
+        // dynamis.setPhaseWindow(
+        //     IDynamis.Phase.SECOND,
+        //     IDynamis.Window(secondPhaseStartTimestamp, secondPhaseEndTimestamp)
+        // );
 
-        vm.stopPrank();
+        // vm.stopPrank();
 
-        // Moving to next phase.
+        // // Moving to next phase.
 
-        typeIndex = uint8(Type.SECOND);
+        // typeIndex = uint8(Type.SECOND);
+        // vm.warp(secondPhaseStartTimestamp + 1);
 
-        vm.warp(secondPhaseStartTimestamp + 1);
+        // // Minting.
 
-        // Minting.
+        // params.quantity = (cap - firstPhaseCap) / 2;
+        // params.costSingle = costSingleUSDT[typeIndex];
+        // params.cost = params.quantity * params.costSingle;
+        // params.token = _USDT;
+        // params.errorSelector = 0x0;
 
-        params.quantity = (cap - firstPhaseCap) / 2;
-        params.costSingle = costSingleUSDT[typeIndex];
-        params.cost = params.quantity * params.costSingle;
-        params.token = _USDT;
-        params.errorSelector = 0x0;
+        // _mintHelper(params);
 
-        _mintHelper(params);
+        // // Minting.
 
-        // Minting.
+        // params.quantity = (cap - firstPhaseCap) / 2;
+        // params.costSingle = costSingleEth[typeIndex];
+        // params.cost = params.quantity * params.costSingle;
+        // params.token = _ETH;
+        // params.errorSelector = 0x0;
 
-        params.quantity = (cap - firstPhaseCap) / 2;
-        params.costSingle = costSingleEth[typeIndex];
-        params.cost = params.quantity * params.costSingle;
-        params.token = _ETH;
-        params.errorSelector = 0x0;
+        // _mintHelper(params);
 
-        _mintHelper(params);
+        // // Checking revert when exceeding cap.
 
-        // Checking revert when exceeding cap.
+        // params.quantity = 1;
+        // params.costSingle = costSingleUSDT[typeIndex];
+        // params.cost = params.quantity * params.costSingle;
+        // params.token = _USDT;
+        // params.errorSelector = DynamisErrors.ExceededCap.selector;
 
-        params.quantity = 1;
-        params.costSingle = costSingleUSDT[typeIndex];
-        params.cost = params.quantity * params.costSingle;
-        params.token = _USDT;
-        params.errorSelector = DynamisErrors.ExceededCap.selector;
+        // _mintHelper(params);
 
-        _mintHelper(params);
+        // params.quantity = cap;
+        // params.costSingle = costSingleEth[typeIndex];
+        // params.cost = params.quantity * params.costSingle;
+        // params.token = _ETH;
+        // params.errorSelector = DynamisErrors.ExceededCap.selector;
 
-        params.quantity = cap;
-        params.costSingle = costSingleEth[typeIndex];
-        params.cost = params.quantity * params.costSingle;
-        params.token = _ETH;
-        params.errorSelector = DynamisErrors.ExceededCap.selector;
-
-        _mintHelper(params);
+        // _mintHelper(params);
     }
 
     function test_Pause() external {
@@ -531,13 +805,15 @@ contract DynamisTest is ERC721Holder, TestHelper {
         params.costSingle = costSingleEth[typeIndex];
         params.token = _ETH;
 
-        // Checking revert on transfer.
+        // Minting.
 
         params.quantity = 1;
         params.cost = params.quantity * params.costSingle;
         params.caller = address(this);
 
         _mintHelper(params);
+
+        // Checking revert on transfer.
 
         uint256 tokenId = 1;
 
@@ -555,13 +831,15 @@ contract DynamisTest is ERC721Holder, TestHelper {
             new bytes(0x00)
         );
 
-        // Checking revert on transfer.
+        // Minting.
 
         params.quantity = 10;
         params.cost = params.quantity * params.costSingle;
         params.caller = address(this);
 
         _mintHelper(params);
+
+        // Checking revert on transfer.
 
         tokenId = 5;
 
@@ -579,7 +857,7 @@ contract DynamisTest is ERC721Holder, TestHelper {
             new bytes(0x00)
         );
 
-        // Checking revert on transfer.
+        // Minting.
 
         params.quantity = 1;
         params.cost = params.quantity * params.costSingle;
@@ -589,6 +867,8 @@ contract DynamisTest is ERC721Holder, TestHelper {
         vm.startPrank(secondary);
 
         _mintHelper(params);
+
+        // Checking revert on transfer.
 
         tokenId = 12;
 
@@ -610,15 +890,18 @@ contract DynamisTest is ERC721Holder, TestHelper {
             new bytes(0x00)
         );
 
-        // Checking revert on transfer.
+        // Minting.
 
         params.quantity = 10;
         params.cost = params.quantity * params.costSingle;
+        params.caller = secondary;
 
         vm.deal(secondary, params.cost);
         vm.startPrank(secondary);
 
         _mintHelper(params);
+
+        // Checking revert on transfer.
 
         tokenId = 22;
 
@@ -664,19 +947,16 @@ contract DynamisTest is ERC721Holder, TestHelper {
         // Transferring.
 
         tokenId = 22;
-
         vm.warp(startTimestamp + dynamis.VESTING_DURATION());
 
         dynamis.transferFrom(secondary, address(this), tokenId);
 
         tokenId = dynamis.totalSupply() - 1;
-
         vm.warp(startTimestamp + dynamis.VESTING_DURATION() + 1);
 
         dynamis.safeTransferFrom(secondary, address(this), tokenId);
 
         tokenId = dynamis.totalSupply() - 2;
-
         vm.warp(startTimestamp + (dynamis.VESTING_DURATION() * 2));
 
         dynamis.safeTransferFrom(
@@ -693,6 +973,276 @@ contract DynamisTest is ERC721Holder, TestHelper {
         dynamis.transferFrom(secondary, tertiary, tokenId);
         dynamis.transferFrom(secondary, tertiary, tokenId + 1);
         dynamis.transferFrom(secondary, tertiary, tokenId + 2);
+
+        // Transferring.
+
+        vm.startPrank(tertiary);
+
+        dynamis.transferFrom(tertiary, address(this), tokenId);
+        dynamis.safeTransferFrom(tertiary, address(this), tokenId + 1);
+        dynamis.safeTransferFrom(
+            tertiary,
+            address(this),
+            tokenId + 2,
+            new bytes(0x00)
+        );
+
+        vm.stopPrank();
+    }
+
+    function test_Rewards() external {
+        // Mint params.
+
+        MintParams memory mintParams = MintParams({
+            quantity: 0,
+            costSingle: 0,
+            cost: 0,
+            caller: address(this),
+            token: IERC20(address(0)),
+            dynamis: dynamis,
+            errorSelector: 0x0
+        });
+
+        uint8 typeIndex = uint8(Type.FIRST);
+        uint256 startTimestamp = windows[typeIndex].startTimestamp + 1;
+        vm.warp(startTimestamp);
+
+        mintParams.costSingle = costSingleEth[typeIndex];
+        mintParams.token = _ETH;
+
+        // Minting.
+
+        mintParams.quantity = 10;
+        mintParams.cost = mintParams.quantity * mintParams.costSingle;
+        mintParams.caller = address(this);
+
+        _mintHelper(mintParams);
+
+        // // Minting.
+
+        // mintParams.quantity = 10;
+        // mintParams.cost = mintParams.quantity * mintParams.costSingle;
+        // mintParams.caller = secondary;
+
+        // vm.deal(secondary, mintParams.cost);
+        // vm.startPrank(secondary);
+
+        // _mintHelper(mintParams);
+
+        // // Minting.
+
+        // mintParams.quantity = 10;
+        // mintParams.cost = mintParams.quantity * mintParams.costSingle;
+        // mintParams.caller = tertiary;
+
+        // vm.deal(tertiary, mintParams.cost);
+        // vm.startPrank(tertiary);
+
+        // _mintHelper(mintParams);
+
+        // vm.stopPrank();
+
+        // Claim params.
+
+        ClaimParams memory claimParams = ClaimParams({
+            tokenId: 0,
+            deadline: 0,
+            privateKey: signerPrivateKey,
+            caller: address(0),
+            dynamis: dynamis,
+            errorSelector: 0x0
+        });
+
+        // Claiming/
+
+        vm.warp(startTimestamp + (dynamis.REWARD_DURATION() / 6));
+
+        claimParams.tokenId = 5;
+        claimParams.deadline = vm.getBlockTimestamp();
+        claimParams.caller = address(this);
+        claimParams.errorSelector = 0x0;
+
+        uint256 balance0 = pai3.balanceOf(claimParams.caller);
+
+        _claimHelper(claimParams);
+
+        uint256 balance1 = pai3.balanceOf(claimParams.caller);
+        uint256 reward = dynamis.REWARD_PER_SECOND() *
+            (dynamis.REWARD_DURATION() / 6);
+
+        assertEq(balance1 - balance0, reward);
+
+        claimParams.tokenId = 8;
+        claimParams.deadline = vm.getBlockTimestamp();
+        claimParams.caller = address(this);
+        claimParams.errorSelector = 0x0;
+
+        balance0 = pai3.balanceOf(claimParams.caller);
+
+        _claimHelper(claimParams);
+
+        balance1 = pai3.balanceOf(claimParams.caller);
+        reward = dynamis.REWARD_PER_SECOND() * (dynamis.REWARD_DURATION() / 6);
+
+        assertEq(balance1 - balance0, reward);
+
+        // Transferring.
+
+        vm.warp(startTimestamp + (dynamis.REWARD_DURATION() / 3));
+
+        uint256 tokenId = 1;
+
+        dynamis.safeTransferFrom(address(this), secondary, tokenId);
+
+        tokenId = 2;
+
+        dynamis.safeTransferFrom(address(this), secondary, tokenId);
+
+        tokenId = 5;
+
+        dynamis.safeTransferFrom(address(this), secondary, tokenId);
+
+        // Claiming.
+
+        claimParams.tokenId = 3;
+        claimParams.deadline = vm.getBlockTimestamp();
+        claimParams.caller = address(this);
+        claimParams.errorSelector = 0x0;
+
+        balance0 = pai3.balanceOf(claimParams.caller);
+
+        _claimHelper(claimParams);
+
+        balance1 = pai3.balanceOf(claimParams.caller);
+        reward = dynamis.REWARD_PER_SECOND() * (dynamis.REWARD_DURATION() / 3);
+
+        assertEq(balance1 - balance0, reward);
+
+        claimParams.tokenId = 8;
+        claimParams.deadline = vm.getBlockTimestamp();
+        claimParams.caller = address(this);
+        claimParams.errorSelector = 0x0;
+
+        balance0 = pai3.balanceOf(claimParams.caller);
+
+        _claimHelper(claimParams);
+
+        balance1 = pai3.balanceOf(claimParams.caller);
+        reward = dynamis.REWARD_PER_SECOND() * (dynamis.REWARD_DURATION() / 6);
+
+        assertEq(balance1 - balance0, reward);
+
+        // Claiming
+
+        vm.startPrank(secondary);
+
+        claimParams.tokenId = 1;
+        claimParams.deadline = vm.getBlockTimestamp();
+        claimParams.caller = secondary;
+        claimParams.errorSelector = 0x0;
+
+        balance0 = pai3.balanceOf(claimParams.caller);
+
+        _claimHelper(claimParams);
+
+        balance1 = pai3.balanceOf(claimParams.caller);
+        reward = dynamis.REWARD_PER_SECOND() * (dynamis.REWARD_DURATION() / 3);
+
+        assertEq(balance1 - balance0, reward);
+
+        // Checking revert on claim.
+
+        claimParams.tokenId = 1;
+        claimParams.deadline = vm.getBlockTimestamp() + 1;
+        claimParams.caller = secondary;
+        claimParams.errorSelector = DynamisErrors.InsufficientReward.selector;
+
+        _claimHelper(claimParams);
+
+        // Transferring.
+
+        tokenId = 1;
+
+        dynamis.safeTransferFrom(secondary, tertiary, tokenId);
+
+        // Checking revert on claim.
+
+        claimParams.tokenId = 1;
+        claimParams.deadline = vm.getBlockTimestamp() + 1;
+        claimParams.caller = secondary;
+        claimParams.errorSelector = DynamisErrors.CallerNotOwner.selector;
+
+        _claimHelper(claimParams);
+
+        // Claiming.
+
+        vm.warp(startTimestamp + ((dynamis.REWARD_DURATION() * 2) / 3));
+
+        claimParams.tokenId = 5;
+        claimParams.deadline = vm.getBlockTimestamp();
+        claimParams.caller = secondary;
+        claimParams.errorSelector = 0x0;
+
+        balance0 = pai3.balanceOf(claimParams.caller);
+
+        _claimHelper(claimParams);
+
+        balance1 = pai3.balanceOf(claimParams.caller);
+        reward = dynamis.REWARD_PER_SECOND() * (dynamis.REWARD_DURATION() / 2);
+
+        assertEq(balance1 - balance0, reward);
+
+        // Claiming.
+
+        vm.warp(startTimestamp + dynamis.REWARD_DURATION());
+
+        claimParams.tokenId = 2;
+        claimParams.deadline = vm.getBlockTimestamp();
+        claimParams.caller = secondary;
+        claimParams.errorSelector = 0x0;
+
+        balance0 = pai3.balanceOf(claimParams.caller);
+
+        _claimHelper(claimParams);
+
+        balance1 = pai3.balanceOf(claimParams.caller);
+        reward = dynamis.REWARD_PER_SECOND() * dynamis.REWARD_DURATION();
+
+        assertEq(balance1 - balance0, reward);
+
+        claimParams.tokenId = 5;
+        claimParams.deadline = vm.getBlockTimestamp();
+        claimParams.caller = secondary;
+        claimParams.errorSelector = 0x0;
+
+        balance0 = pai3.balanceOf(claimParams.caller);
+
+        _claimHelper(claimParams);
+
+        balance1 = pai3.balanceOf(claimParams.caller);
+        reward = dynamis.REWARD_PER_SECOND() * (dynamis.REWARD_DURATION() / 3);
+
+        assertEq(balance1 - balance0, reward);
+
+        // Checking revert on claim.
+
+        vm.warp(startTimestamp + dynamis.REWARD_DURATION() + 1);
+
+        claimParams.tokenId = 2;
+        claimParams.deadline = vm.getBlockTimestamp();
+        claimParams.caller = secondary;
+        claimParams.errorSelector = DynamisErrors.InsufficientReward.selector;
+
+        _claimHelper(claimParams);
+
+        vm.warp(startTimestamp + (dynamis.REWARD_DURATION() * 2));
+
+        claimParams.tokenId = 5;
+        claimParams.deadline = vm.getBlockTimestamp();
+        claimParams.caller = secondary;
+        claimParams.errorSelector = DynamisErrors.InsufficientReward.selector;
+
+        _claimHelper(claimParams);
 
         vm.stopPrank();
     }

@@ -86,6 +86,15 @@ abstract contract TestStorage is Test {
         bytes4 errorSelector;
     }
 
+    struct ClaimParams {
+        uint256 tokenId;
+        uint256 deadline;
+        uint256 privateKey;
+        address caller;
+        IDynamis dynamis;
+        bytes4 errorSelector;
+    }
+
     /* ========================== CONSTRUCTOR ========================== */
 
     constructor() {

@@ -73,13 +73,28 @@ abstract contract TestHelper is TestStorage {
         }
     }
 
+    function _claimHelper(ClaimParams memory params) internal {
+        bytes memory signature = _signClaimHelper(
+            params.tokenId,
+            params.deadline,
+            params.privateKey,
+            params.caller
+        );
+
+        if (params.errorSelector != 0x0) {
+            vm.expectRevert(params.errorSelector);
+        }
+
+        params.dynamis.claim(params.tokenId, params.deadline, signature);
+    }
+
     function _signSaleHelper(
         uint8 saleIndex,
         uint256 quantity,
         uint256 deadline,
         uint256 privateKey,
         address caller
-    ) internal pure returns (bytes memory) {
+    ) private pure returns (bytes memory) {
         bytes32 messageHash = keccak256(
             abi.encodePacked(caller, saleIndex, quantity, deadline)
         );
@@ -94,11 +109,11 @@ abstract contract TestHelper is TestStorage {
     }
 
     function _signClaimHelper(
-        address caller,
         uint256 tokenId,
         uint256 deadline,
-        uint256 privateKey
-    ) internal pure returns (bytes memory) {
+        uint256 privateKey,
+        address caller
+    ) private pure returns (bytes memory) {
         bytes32 messageHash = keccak256(
             abi.encodePacked(caller, tokenId, deadline)
         );
