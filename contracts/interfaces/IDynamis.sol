@@ -22,11 +22,11 @@ interface IDynamis is IERC721A {
     }
 
     enum Phase {
-        START,
+        FIRST,
         SECOND,
         THIRD,
         FOURTH,
-        END
+        FIFTH
     }
 
     enum Scenario {

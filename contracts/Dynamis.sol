@@ -611,25 +611,12 @@ contract Dynamis is Ownable2Step, Pausable, ERC721A, DynamisErrors, IDynamis {
      * @dev Implements phase validations and phase change logic.
      */
     function _processPhase(uint256 quantity) private {
-        if (_phase == Phase.END) {
+        if (_phase == Phase.FIFTH) {
             return;
         }
 
-        if (_phase == Phase.START) {
-            Cap storage cap = situationalCaps[uint8(Scenario.FIRST_PHASE)];
-
-            cap.minted += uint128(quantity);
-
-            uint256 maxSupply = cap.cap;
-            uint256 supply = cap.minted;
-
-            if (supply > maxSupply) {
-                _revert(ExceededCap.selector);
-            }
-        }
-
         if (
-            block.timestamp <= phaseWindows[uint8(Phase.START)].startTimestamp
+            block.timestamp <= phaseWindows[uint8(Phase.FIRST)].startTimestamp
         ) {
             _revert(PhaseInactive.selector);
         }
@@ -660,6 +647,19 @@ contract Dynamis is Ownable2Step, Pausable, ERC721A, DynamisErrors, IDynamis {
 
                     break;
                 }
+            }
+        }
+
+        if (_phase == Phase.FIRST) {
+            Cap storage cap = situationalCaps[uint8(Scenario.FIRST_PHASE)];
+
+            cap.minted += uint128(quantity);
+
+            uint256 maxSupply = cap.cap;
+            uint256 supply = cap.minted;
+
+            if (supply > maxSupply) {
+                _revert(ExceededCap.selector);
             }
         }
     }
