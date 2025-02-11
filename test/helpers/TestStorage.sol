@@ -14,68 +14,155 @@ abstract contract TestStorage is Test {
     address public secondary;
     address public tertiary;
 
-    uint256 public secondarySignerPrivateKey;
-    address public secondarySigner;
-
     uint256 public totalSupply;
 
     address public owner;
 
     string public name;
     string public symbol;
-
-    uint256 public initialCap;
     uint256 public cap;
-    uint64 public rewardDuration;
-    uint256 public rewardPerSecond;
-    uint256 public baseCostSingle;
 
     address public treasuryWallet;
     address public rewardWallet;
+
     uint256 public signerPrivateKey;
     address public signer;
+
+    uint256 public secondarySignerPrivateKey;
+    address public secondarySigner;
+
     string public baseURI;
+
+    uint128[2] public situationalCaps;
+
+    uint256[2] public saleBaseCosts;
+
+    uint256[5] public phaseBaseCosts;
+
+    IDynamis.Window[3] public windows;
+
+    uint256[] public costSingleEth;
+    uint256[] public costSingleUSDT;
 
     /* ========================== TYPES ========================== */
 
-    struct MintParams {
+    enum Type {
+        NODE,
+        WHITELIST,
+        FIRST,
+        SECOND,
+        THIRD,
+        FOURTH,
+        FIFTH
+    }
+
+    struct PriceData {
+        uint256 priceDecimals;
+        uint256 decimals;
+        uint256 price;
+    }
+
+    struct MintSaleParams {
+        IDynamis.Sale sale;
+        uint8 saleIndex;
+        uint256 quantity;
         uint256 deadline;
         uint256 privateKey;
-        uint256 quantity;
+        uint256 costSingle;
         uint256 cost;
         address caller;
         IERC20 token;
-        IDynamis collection;
+        IDynamis dynamis;
+        bytes4 errorSelector;
+    }
+
+    struct MintParams {
+        uint256 quantity;
+        uint256 costSingle;
+        uint256 cost;
+        address caller;
+        IERC20 token;
+        IDynamis dynamis;
         bytes4 errorSelector;
     }
 
     /* ========================== CONSTRUCTOR ========================== */
 
     constructor() {
-        secondary = address(0xAAA);
-        tertiary = address(0xBBB);
+        secondary = address(0xAAAA);
+        tertiary = address(0xBBBB);
+
+        totalSupply = vm.envUint("TOTAL_SUPPLY");
+
+        owner = address(0xCCCC);
+
+        name = vm.envString("NAME");
+        symbol = vm.envString("SYMBOL");
+        cap = vm.envUint("CAP");
+
+        treasuryWallet = address(0xDDDD);
+        rewardWallet = address(0xEEEE);
+
+        signerPrivateKey = 100;
+        signer = vm.addr(signerPrivateKey);
 
         secondarySignerPrivateKey = 200;
         secondarySigner = vm.addr(secondarySignerPrivateKey);
 
-        totalSupply = vm.envUint("TOTAL_SUPPLY");
+        baseURI = "ipfs://Q.../";
 
-        owner = address(0xCCC);
+        // Situational caps.
 
-        name = vm.envString("NAME");
-        symbol = vm.envString("SYMBOL");
+        uint256[] memory tempSituationalCaps = vm.envUint(
+            "SITUATIONAL_CAPS",
+            "|"
+        );
 
-        initialCap = vm.envUint("INITIAL_CAP");
-        cap = vm.envUint("CAP");
-        rewardDuration = uint64(vm.envUint("REWARD_DURATION"));
-        rewardPerSecond = vm.envUint("REWARD_PER_SECOND");
-        baseCostSingle = vm.envUint("BASE_COST_SINGLE");
+        for (uint256 i; i < tempSituationalCaps.length; ++i) {
+            situationalCaps[i] = uint128(tempSituationalCaps[i]);
+        }
 
-        treasuryWallet = address(0xDDD);
-        rewardWallet = address(0xEEE);
-        signerPrivateKey = 100;
-        signer = vm.addr(signerPrivateKey);
-        baseURI = "ipfs://";
+        // Sale base costs.
+
+        uint256[] memory temp = vm.envUint("SALE_BASE_COSTS", "|");
+
+        for (uint256 i; i < temp.length; ++i) {
+            saleBaseCosts[i] = temp[i];
+
+            costSingleEth.push((temp[i] * 1e26) / (4000 * 1e8));
+            costSingleUSDT.push((temp[i] * 1e14) / (1 * 1e8));
+        }
+
+        // Phase base costs.
+
+        temp = vm.envUint("PHASE_BASE_COSTS", "|");
+
+        for (uint256 i; i < temp.length; ++i) {
+            phaseBaseCosts[i] = temp[i];
+
+            costSingleEth.push((temp[i] * 1e26) / (4000 * 1e8));
+            costSingleUSDT.push((temp[i] * 1e14) / (1 * 1e8));
+        }
+
+        // Windows.
+
+        uint128 saleStartTimestamp = 0;
+        uint128 saleEndTimestamp = saleStartTimestamp + 2 days;
+        uint128 firstPhaseStartTimestamp = saleEndTimestamp + 1 days;
+        uint128 firstPhaseEndTimestamp = firstPhaseStartTimestamp + 3 days;
+
+        windows[uint8(Type.NODE)] = IDynamis.Window({
+            startTimestamp: saleStartTimestamp,
+            endTimestamp: saleEndTimestamp
+        });
+        windows[uint8(Type.WHITELIST)] = IDynamis.Window({
+            startTimestamp: saleStartTimestamp,
+            endTimestamp: saleEndTimestamp
+        });
+        windows[uint8(Type.FIRST)] = IDynamis.Window({
+            startTimestamp: firstPhaseStartTimestamp,
+            endTimestamp: firstPhaseEndTimestamp
+        });
 
         vm.label(secondary, "secondary");
         vm.label(tertiary, "tertiary");

@@ -18,13 +18,13 @@ abstract contract TestHelper is TestStorage {
 
     /* ========================== FUNCTIONS ========================== */
 
-    function _mintHelper(MintParams memory params) internal {
-        uint256 startTokenId = params.collection.totalSupply() + 1;
-        bytes memory signature = _signHelper(
-            params.caller,
-            startTokenId,
+    function _mintSaleHelper(MintSaleParams memory params) internal {
+        bytes memory signature = _signSaleHelper(
+            params.saleIndex,
+            params.quantity,
             params.deadline,
-            params.privateKey
+            params.privateKey,
+            params.caller
         );
 
         if (params.token == _ETH) {
@@ -32,35 +32,75 @@ abstract contract TestHelper is TestStorage {
                 vm.expectRevert(params.errorSelector);
             }
 
-            params.collection.mintWithETH{ value: params.cost }(
+            params.dynamis.mintSaleWithEth{ value: params.cost }(
                 params.quantity,
                 params.deadline,
+                params.sale,
                 signature
             );
         } else {
-            params.token.forceApprove(address(params.collection), params.cost);
+            params.token.forceApprove(address(params.dynamis), params.cost);
 
             if (params.errorSelector != 0x0) {
                 vm.expectRevert(params.errorSelector);
             }
 
-            params.collection.mint(
+            params.dynamis.mintSale(
                 params.token,
                 params.quantity,
                 params.deadline,
+                params.sale,
                 signature
             );
         }
     }
 
-    function _signHelper(
+    function _mintHelper(MintParams memory params) internal {
+        if (params.token == _ETH) {
+            if (params.errorSelector != 0x0) {
+                vm.expectRevert(params.errorSelector);
+            }
+
+            params.dynamis.mintWithEth{ value: params.cost }(params.quantity);
+        } else {
+            params.token.forceApprove(address(params.dynamis), params.cost);
+
+            if (params.errorSelector != 0x0) {
+                vm.expectRevert(params.errorSelector);
+            }
+
+            params.dynamis.mint(params.token, params.quantity);
+        }
+    }
+
+    function _signSaleHelper(
+        uint8 saleIndex,
+        uint256 quantity,
+        uint256 deadline,
+        uint256 privateKey,
+        address caller
+    ) internal pure returns (bytes memory) {
+        bytes32 messageHash = keccak256(
+            abi.encodePacked(caller, saleIndex, quantity, deadline)
+        );
+
+        bytes32 digest = messageHash.toEthSignedMessageHash();
+
+        (uint8 v, bytes32 r, bytes32 s) = vm.sign(privateKey, digest);
+
+        bytes memory signature = abi.encodePacked(r, s, v);
+
+        return signature;
+    }
+
+    function _signClaimHelper(
         address caller,
-        uint256 startTokenId,
+        uint256 tokenId,
         uint256 deadline,
         uint256 privateKey
     ) internal pure returns (bytes memory) {
         bytes32 messageHash = keccak256(
-            abi.encodePacked(caller, startTokenId, deadline)
+            abi.encodePacked(caller, tokenId, deadline)
         );
 
         bytes32 digest = messageHash.toEthSignedMessageHash();
